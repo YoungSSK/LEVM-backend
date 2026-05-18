@@ -1,5 +1,6 @@
 import express, { json } from "express";
 import dotenv from "dotenv";
+import cookieParser from "cookie-parser";
 import connectDB from "./libs/db.js";
 import authRoute from "./routes/authRouter.js";
 import swaggerUi from "swagger-ui-express";
@@ -10,6 +11,7 @@ const PORT = process.env.PORT || 5001;
 app.set("trust proxy", 1);
 //middleware
 app.use(express.json());
+app.use(cookieParser());
 
 // swagger
 const swaggerDocument = JSON.parse(

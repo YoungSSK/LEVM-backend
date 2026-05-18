@@ -51,11 +51,25 @@ export const Logout = async (req, res) => {
   try {
     const refreshToken = req.cookies.refreshToken;
     await authService.logout(refreshToken);
-    return res.sendstatus(200).json({ succes: true });
+    return res.sendStatus(200).json({ success: true });
   } catch (error) {
     console.error("Lỗi khi đăng xuất", error);
     return res
       .status(error.statusCode || 500)
       .json({ succes: false, message: error.message || "Lỗi hệ thống" });
+  }
+};
+
+// tạo access Token bằng refresh Token
+export const refreshToken = async (req, res) => {
+  try {
+    const refreshToken = req.cookies.refreshToken;
+    const { accessToken } = await authService.refreshToken(refreshToken);
+    return res.status(200).json({ success: true, accessToken });
+  } catch (error) {
+    console.error("Lỗi khi tạo accessToken mới ");
+    return res
+      .status(error.statusCode || 500)
+      .json({ success: false, message: error.message || "Lỗi hệ thống" });
   }
 };
