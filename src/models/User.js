@@ -1,0 +1,63 @@
+import mongoose, { Schema } from "mongoose";
+
+const userSchema = new mongoose.Schema(
+  {
+    username: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
+    },
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
+    },
+    hashPassword: {
+      type: String,
+      required: true,
+    },
+    avatar: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+    bio: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+    occupationId: {
+      type: Schema.Types.ObjectId,
+      ref: "Occupation",
+      default: null,
+    },
+    streak: {
+      type: Number,
+      default: 0,
+    },
+
+    xp: {
+      type: Number,
+      default: 0,
+    },
+    role: {
+      type: String,
+      enum: ["user", "admin"],
+      default: "user",
+    },
+  },
+  {
+    timestamps: true,
+  },
+);
+
+userSchema.index({ xp: -1 });
+userSchema.index({ username: "text" });
+userSchema.index({ role: 1, xp: -1 });
+
+const User = mongoose.model("User", userSchema);
+
+export default User;
