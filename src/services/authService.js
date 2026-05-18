@@ -74,3 +74,22 @@ export const logout = async (refreshToken) => {
     },
   );
 };
+// Service xử lý việc tạo mới accessToken
+export const refreshToken = async (refreshToken) => {
+  if (!refreshToken) {
+    throw new AppError("Token không tồn tại", 401);
+  }
+  const session = await Session.findOne({
+    refreshToken: refreshToken,
+    isRevoked: false,
+  });
+  if (!session || session.expiresAt < new Date()) {
+    throw new AppError("Token không hợp lệ hoặc hết hạn", 401);
+  }
+  const accessToken = jwt.sign(
+    { userId: session.userId },
+    process.env.ACCESS_TOKEN_SECRET,
+    { expiresIn: ACCESS_TOKEN_TTL },
+  );
+  return { accessToken };
+};
