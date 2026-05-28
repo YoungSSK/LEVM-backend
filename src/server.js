@@ -3,6 +3,8 @@ import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import connectDB from "./libs/db.js";
 import authRoute from "./routes/authRouter.js";
+import cors from "cors";
+import { authMiddleware } from "./middlewares/authMiddleware.js";
 import swaggerUi from "swagger-ui-express";
 import fs from "fs";
 dotenv.config();
@@ -12,7 +14,7 @@ app.set("trust proxy", 1);
 //middleware
 app.use(express.json());
 app.use(cookieParser());
-
+app.use(cors({ origin: process.env.CLIENT_URL, credentials: true }));
 // swagger
 const swaggerDocument = JSON.parse(
   fs.readFileSync("./src/swagger.json", "utf8"),
@@ -21,7 +23,8 @@ const swaggerDocument = JSON.parse(
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 //public router
 app.use("/api/auth", authRoute);
-
+//pivate router
+app.use(authMiddleware);
 connectDB().then(() => {
   app.listen(PORT, () => {
     console.log(`Server bắt đầu trên cổng ${PORT}`);
