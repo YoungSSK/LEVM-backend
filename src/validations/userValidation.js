@@ -15,9 +15,9 @@ export const registerUserSchema = z.object({
 
   password: z
     .string({ required_error: "Mật khẩu là bắt buộc" })
-    .min(6, "Mật khẩu phải có ít nhất 6 ký tự"),
-  //   .regex(/[A-Z]/, "Mật khẩu phải chứa ít nhất 1 chữ hoa")
-  //   .regex(/[0-9]/, "Mật khẩu phải chứa ít nhất 1 chữ số"),
+    .min(6, "Mật khẩu phải có ít nhất 6 ký tự")
+    .regex(/[A-Z]/, "Mật khẩu phải chứa ít nhất 1 chữ hoa")
+    .regex(/[0-9]/, "Mật khẩu phải chứa ít nhất 1 chữ số"),
 });
 export const loginUserSchema = z.object({
   email: z
@@ -40,4 +40,3 @@ export const updateUserSchema = z.object({
   bio: z.string().max(200, "Bio không quá 200 ký tự").optional(),
   occupationId: z.string().optional(),
 });
-
