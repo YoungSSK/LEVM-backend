@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import connectDB from "./libs/db.js";
 import authRoute from "./routes/authRouter.js";
+import userRoute from "./routes/userRouter.js";
 import cors from "cors";
 import { authMiddleware } from "./middlewares/authMiddleware.js";
 import swaggerUi from "swagger-ui-express";
@@ -25,6 +26,8 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 app.use("/api/auth", authRoute);
 //pivate router
 app.use(authMiddleware);
+app.use("/api/users", userRoute);
+
 connectDB().then(() => {
   app.listen(PORT, () => {
     console.log(`Server bắt đầu trên cổng ${PORT}`);
