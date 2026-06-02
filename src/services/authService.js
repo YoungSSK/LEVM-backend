@@ -26,6 +26,7 @@ export const register = async (data) => {
   // tạo User mới
   await User.create({
     username,
+    displayName: username,
     email,
     hashPassword,
   });
