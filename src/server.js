@@ -4,6 +4,7 @@ import cookieParser from "cookie-parser";
 import connectDB from "./libs/db.js";
 import authRoute from "./routes/authRouter.js";
 import userRoute from "./routes/userRouter.js";
+import occupationCategoryRoute from "./routes/occupationCategoryRoute.js";
 import cors from "cors";
 import { authMiddleware } from "./middlewares/authMiddleware.js";
 import swaggerUi from "swagger-ui-express";
@@ -27,7 +28,7 @@ app.use("/api/auth", authRoute);
 //pivate router
 app.use(authMiddleware);
 app.use("/api/users", userRoute);
-
+app.use("/api/occupation-categories", occupationCategoryRoute);
 connectDB().then(() => {
   app.listen(PORT, () => {
     console.log(`Server bắt đầu trên cổng ${PORT}`);

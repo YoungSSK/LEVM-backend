@@ -1,12 +1,10 @@
 import { z } from "zod";
 
 const trimString = (value) =>
-  typeof value === "string" ? value.trim() : value;
+  typeof value === "string" ? value.trim().replace(/\s+/g, " ") : value;
 
 const normalizeDescription = (value) => {
-  if (value === null) {
-    return "";
-  }
+  if (value == null) return "";
 
   return typeof value === "string" ? value.trim() : value;
 };
@@ -16,9 +14,7 @@ export const createOccupationCategorySchema = z
     name: z.preprocess(
       trimString,
       z
-        .string({
-          required_error: "Tên nhóm ngành là bắt buộc",
-        })
+        .string()
         .min(1, "Tên nhóm ngành không được để trống")
         .max(100, "Tên nhóm ngành không được vượt quá 100 ký tự"),
     ),
@@ -31,8 +27,6 @@ export const createOccupationCategorySchema = z
         .optional()
         .default(""),
     ),
-
-    isActive: z.boolean().optional(),
   })
   .strict();
 

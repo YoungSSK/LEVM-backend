@@ -36,7 +36,7 @@ const userSchema = new mongoose.Schema(
       trim: true,
     },
     occupationId: {
-      type: Schema.Types.ObjectId,
+      type: mongoose.Schema.Types.ObjectId,
       ref: "Occupation",
       default: null,
     },

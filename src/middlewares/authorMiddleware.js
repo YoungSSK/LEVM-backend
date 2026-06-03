@@ -15,3 +15,4 @@ export const authorMiddleware = (...roles) => {
     }
   };
 };
+export default authorMiddleware;
