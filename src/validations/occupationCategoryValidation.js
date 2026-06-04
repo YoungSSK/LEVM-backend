@@ -8,6 +8,13 @@ const normalizeDescription = (value) => {
 
   return typeof value === "string" ? value.trim() : value;
 };
+const normalizeOptionalString = (value) => {
+  if (typeof value !== "string") return value;
+
+  const trimmed = value.trim().replace(/\s+/g, " ");
+
+  return trimmed === "" ? undefined : trimmed;
+};
 
 export const createOccupationCategorySchema = z
   .object({
@@ -33,7 +40,7 @@ export const createOccupationCategorySchema = z
 export const updateOccupationCategorySchema = z
   .object({
     name: z.preprocess(
-      trimString,
+      normalizeOptionalString,
       z
         .string()
         .min(1, "Tên nhóm ngành không được để trống")

@@ -31,6 +31,7 @@ export const getAllOccupationCategory = async (req, res) => {
 export const updateOccupationCategory = async (req, res) => {
   try {
     const updateCategory = await occupationCategoryService.update(
+      req.params.id,
       req.validatedData,
     );
     return res.status(200).json({

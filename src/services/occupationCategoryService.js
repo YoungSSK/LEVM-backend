@@ -19,16 +19,16 @@ export const getAll = async () => {
   return await OccupationCategory.find();
 };
 // Hàm cập nhật lại nhóm ngành nghề
-export const update = async (data) => {
-  const { _id, name, description, isActive } = data;
-  const existCategory = await OccupationCategory.findById(_id);
+export const update = async (id, data) => {
+  const { name, description, isActive } = data;
+  const existCategory = await OccupationCategory.findById(id);
   if (!existCategory) {
     throw new AppError("Nhóm ngành nghề này không tồn tại", 400);
   }
   if (name !== undefined) {
     const duplicateName = await OccupationCategory.findOne({
       name,
-      _id: { $ne: _id },
+      _id: { $ne: id },
     });
     if (duplicateName) {
       throw new AppError("Tên nhóm ngành nghề đã tồn tại", 400);
@@ -45,7 +45,7 @@ export const update = async (data) => {
     updateData.isActive = isActive;
   }
   const updatedCategory = await OccupationCategory.findByIdAndUpdate(
-    _id,
+    id,
     updateData,
     {
       new: true,

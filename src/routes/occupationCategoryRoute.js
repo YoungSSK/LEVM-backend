@@ -19,15 +19,15 @@ router.get("/", getAllOccupationCategory);
 // API tạo mới
 router.post(
   "/",
-  authorMiddleware("Admin"),
+  authorMiddleware("admin"),
   validate(createOccupationCategorySchema),
   createOccupationCategory,
 );
 
 // API cập nhật
 router.patch(
-  "/",
-  authorMiddleware("Admin"),
+  "/:id",
+  authorMiddleware("admin"),
   validate(updateOccupationCategorySchema),
   updateOccupationCategory,
 );
