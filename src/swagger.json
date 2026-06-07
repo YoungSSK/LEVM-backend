@@ -3,7 +3,7 @@
   "info": {
     "title": "LEWM API Documentation",
     "version": "1.0.0",
-    "description": "API Documentation cho dự án LEWM"
+    "description": "API Documentation for the LEWM project"
   },
   "servers": [
     {
@@ -14,15 +14,19 @@
   "tags": [
     {
       "name": "Auth",
-      "description": "Các API liên quan đến xác thực người dùng"
+      "description": "Authentication APIs"
+    },
+    {
+      "name": "User",
+      "description": "Authenticated user profile and password APIs"
     }
   ],
   "paths": {
     "/auth/register": {
       "post": {
         "tags": ["Auth"],
-        "summary": "Đăng ký tài khoản mới",
-        "description": "API dùng để đăng ký tài khoản mới vào hệ thống",
+        "summary": "Register a new account",
+        "description": "Creates a new user account in the system.",
         "requestBody": {
           "required": true,
           "content": {
@@ -35,7 +39,7 @@
         },
         "responses": {
           "201": {
-            "description": "Đăng ký tài khoản thành công",
+            "description": "Account registered successfully",
             "content": {
               "application/json": {
                 "schema": {
@@ -47,7 +51,7 @@
                     },
                     "message": {
                       "type": "string",
-                      "example": "Đăng ký tài khoản thành công"
+                      "example": "Registration successful"
                     }
                   }
                 }
@@ -55,7 +59,7 @@
             }
           },
           "400": {
-            "description": "Dữ liệu đầu vào không hợp lệ",
+            "description": "Invalid input data",
             "content": {
               "application/json": {
                 "schema": {
@@ -65,7 +69,7 @@
             }
           },
           "500": {
-            "description": "Lỗi hệ thống",
+            "description": "Server error",
             "content": {
               "application/json": {
                 "schema": {
@@ -80,8 +84,8 @@
     "/auth/login": {
       "post": {
         "tags": ["Auth"],
-        "summary": "Đăng nhập",
-        "description": "API dùng để đăng nhập vào hệ thống",
+        "summary": "Login",
+        "description": "Authenticates a user and returns an access token.",
         "requestBody": {
           "required": true,
           "content": {
@@ -94,10 +98,10 @@
         },
         "responses": {
           "200": {
-            "description": "Đăng nhập thành công",
+            "description": "Login successful",
             "headers": {
               "Set-Cookie": {
-                "description": "Refresh token được set trong cookie",
+                "description": "Refresh token is set in the cookie",
                 "schema": {
                   "type": "string",
                   "example": "refreshToken=abc123xyz; HttpOnly; Secure; SameSite=None"
@@ -115,7 +119,7 @@
                     },
                     "message": {
                       "type": "string",
-                      "example": "User admin đã đăng nhập với vai trò ADMIN"
+                      "example": "User john_doe logged in successfully"
                     },
                     "accessToken": {
                       "type": "string",
@@ -127,7 +131,7 @@
             }
           },
           "400": {
-            "description": "Dữ liệu đầu vào không hợp lệ",
+            "description": "Invalid input data",
             "content": {
               "application/json": {
                 "schema": {
@@ -137,7 +141,7 @@
             }
           },
           "401": {
-            "description": "Thông tin đăng nhập không chính xác",
+            "description": "Invalid email or password",
             "content": {
               "application/json": {
                 "schema": {
@@ -147,7 +151,239 @@
             }
           },
           "500": {
-            "description": "Lỗi hệ thống",
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/me": {
+      "get": {
+        "tags": ["User"],
+        "summary": "Get current user profile",
+        "description": "Returns the profile of the currently authenticated user.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Profile fetched successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/UserProfile"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": ["User"],
+        "summary": "Update current user profile",
+        "description": "Updates display name, avatar, bio, or occupation for the authenticated user.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProfileRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Profile updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Profile updated successfully"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/UserProfile"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input or empty payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/change-password": {
+      "patch": {
+        "tags": ["User"],
+        "summary": "Change current user password",
+        "description": "Allows the authenticated user to change their password.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangePasswordRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Password updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Password updated successfully"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input or password rules not satisfied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Current password is incorrect",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
             "content": {
               "application/json": {
                 "schema": {
@@ -165,43 +401,179 @@
       "RegisterRequest": {
         "type": "object",
         "required": ["username", "email", "password"],
+        "additionalProperties": false,
         "properties": {
           "username": {
             "type": "string",
             "minLength": 3,
             "maxLength": 30,
             "example": "johndoe",
-            "description": "Username phải có ít nhất 3 ký tự và không được quá 30 ký tự"
+            "description": "Username must be at least 3 characters and no more than 30 characters."
           },
           "email": {
             "type": "string",
             "format": "email",
             "example": "johndoe@example.com",
-            "description": "Định dạng email hợp lệ"
+            "description": "A valid email address."
           },
           "password": {
             "type": "string",
             "minLength": 6,
-            "example": "password123",
-            "description": "Mật khẩu phải có ít nhất 6 ký tự"
+            "example": "Password123",
+            "description": "At least 6 characters, with at least 1 uppercase letter and 1 number."
           }
         }
       },
       "LoginRequest": {
         "type": "object",
         "required": ["email", "password"],
+        "additionalProperties": false,
         "properties": {
           "email": {
             "type": "string",
             "format": "email",
             "example": "johndoe@example.com",
-            "description": "Định dạng email hợp lệ"
+            "description": "A valid email address."
           },
           "password": {
             "type": "string",
             "minLength": 1,
-            "example": "password123",
-            "description": "Vui lòng nhập mật khẩu"
+            "example": "Password123",
+            "description": "User password."
+          }
+        }
+      },
+      "UserProfile": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "_id": {
+            "type": "string",
+            "example": "6659f0e2d2c9d0f4a1b2c3d4"
+          },
+          "__v": {
+            "type": "integer",
+            "example": 0
+          },
+          "username": {
+            "type": "string",
+            "example": "johndoe"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "johndoe@example.com"
+          },
+          "displayName": {
+            "type": "string",
+            "example": "John Doe"
+          },
+          "avatar": {
+            "type": "string",
+            "example": ""
+          },
+          "bio": {
+            "type": "string",
+            "example": ""
+          },
+          "occupationId": {
+            "type": "string",
+            "nullable": true,
+            "description": "MongoDB ObjectId for the user's occupation or null if not set.",
+            "example": null
+          },
+          "streak": {
+            "type": "integer",
+            "example": 3
+          },
+          "xp": {
+            "type": "integer",
+            "example": 120
+          },
+          "role": {
+            "type": "string",
+            "enum": ["user", "admin"],
+            "example": "user"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-05-18T11:47:00.000Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-05-18T11:47:00.000Z"
+          }
+        }
+      },
+      "UpdateProfileRequest": {
+        "type": "object",
+        "minProperties": 1,
+        "additionalProperties": false,
+        "properties": {
+          "displayName": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 50,
+            "example": "John Doe"
+          },
+          "avatar": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "uri"
+              },
+              {
+                "type": "string",
+                "enum": [""]
+              }
+            ],
+            "description": "Avatar URL or an empty string to clear the value.",
+            "example": "https://example.com/avatar.png"
+          },
+          "bio": {
+            "type": "string",
+            "maxLength": 200,
+            "example": "Learning every day"
+          },
+          "occupationId": {
+            "oneOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9a-fA-F]{24}$"
+              },
+              {
+                "type": "string",
+                "enum": [""]
+              }
+            ],
+            "description": "MongoDB ObjectId or an empty string to clear the value.",
+            "example": "6659f0e2d2c9d0f4a1b2c3d5"
+          }
+        }
+      },
+      "ChangePasswordRequest": {
+        "type": "object",
+        "required": ["oldPassword", "newPassword", "confirmPassword"],
+        "additionalProperties": false,
+        "properties": {
+          "oldPassword": {
+            "type": "string",
+            "minLength": 1,
+            "example": "OldPassword123"
+          },
+          "newPassword": {
+            "type": "string",
+            "minLength": 6,
+            "description": "Must contain at least 1 uppercase letter and 1 number.",
+            "example": "NewPassword123"
+          },
+          "confirmPassword": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Must match newPassword.",
+            "example": "NewPassword123"
           }
         }
       },
@@ -214,7 +586,7 @@
           },
           "message": {
             "type": "string",
-            "example": "Thông báo lỗi chi tiết"
+            "example": "An error occurred"
           }
         }
       }
