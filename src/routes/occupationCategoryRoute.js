@@ -3,6 +3,7 @@ import {
   createOccupationCategory,
   getAllOccupationCategory,
   updateOccupationCategory,
+  deletedOccupationCategory,
 } from "../controllers/occupationCategoryController.js";
 import authorMiddleware from "../middlewares/authorMiddleware.js";
 import { validate } from "../middlewares/validateMiddleware.js";
@@ -31,5 +32,6 @@ router.patch(
   validate(updateOccupationCategorySchema),
   updateOccupationCategory,
 );
+router.delete("/:id", authorMiddleware("admin"), deletedOccupationCategory);
 
 export default router;

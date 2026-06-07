@@ -31,6 +31,7 @@ export const create = async (data) => {
     isActive: true,
   });
 };
+//Hàm update ngành nghề
 export const update = async (id, data) => {
   const occupation = await Occupation.findById(id);
 

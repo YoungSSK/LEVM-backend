@@ -1,3 +1,4 @@
+import { success } from "zod";
 import * as occupationCategoryService from "../services/occupationCategoryService.js";
 
 export const createOccupationCategory = async (req, res) => {
@@ -41,6 +42,20 @@ export const updateOccupationCategory = async (req, res) => {
     });
   } catch (error) {
     console.error("Lỗi updateOccupationCategory: ", error);
+    return res
+      .status(error.statusCode || 500)
+      .json({ success: false, message: error.message || "Lỗi hệ thống" });
+  }
+};
+export const deletedOccupationCategory = async (req, res) => {
+  try {
+    await occupationCategoryService.deleteData(req.params.id);
+    return res.status(200).json({
+      success: true,
+      message: "Đã xóa vĩnh viễn nhóm ngành khỏi hệ thống",
+    });
+  } catch (error) {
+    console.error("Lỗi deletedOccupationCategory: ", error);
     return res
       .status(error.statusCode || 500)
       .json({ success: false, message: error.message || "Lỗi hệ thống" });

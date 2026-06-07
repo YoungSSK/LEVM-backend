@@ -10,6 +10,7 @@ import cors from "cors";
 import { authMiddleware } from "./middlewares/authMiddleware.js";
 import swaggerUi from "swagger-ui-express";
 import fs from "fs";
+
 dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5001;
@@ -22,7 +23,7 @@ app.use(cors({ origin: process.env.CLIENT_URL, credentials: true }));
 const swaggerDocument = JSON.parse(
   fs.readFileSync("./src/swagger.json", "utf8"),
 );
-
+//Swager
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 //public router
 app.use("/api/auth", authRoute);
