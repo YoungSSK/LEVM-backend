@@ -5,29 +5,32 @@ const objectIdRegex = /^[0-9a-fA-F]{24}$/;
 const trimString = (value) =>
   typeof value === "string" ? value.trim() : value;
 
-const normalizeDescription = (value) => {
-  if (value === null) {
-    return "";
-  }
-
-  return typeof value === "string" ? value.trim() : value;
-};
-
 const normalizeName = (value) => {
   if (typeof value === "string") {
-    return value.trim().toLowerCase();
+    return value.trim().replace(/\s+/g, " ").toLowerCase();
   }
 
   return value;
 };
 
+const normalizeDescription = (value) => {
+  if (value === null) {
+    return "";
+  }
+
+  return typeof value === "string" ? value.trim().replace(/\s+/g, " ") : value;
+};
+
 export const createOccupationSchema = z
   .object({
-    categoryId: z
-      .string({
-        required_error: "Nhóm ngành là bắt buộc",
-      })
-      .regex(objectIdRegex, "ID nhóm ngành không hợp lệ"),
+    categoryId: z.preprocess(
+      trimString,
+      z
+        .string({
+          required_error: "Nhóm ngành là bắt buộc",
+        })
+        .regex(objectIdRegex, "ID nhóm ngành không hợp lệ"),
+    ),
 
     name: z.preprocess(
       normalizeName,
@@ -54,10 +57,10 @@ export const createOccupationSchema = z
 
 export const updateOccupationSchema = z
   .object({
-    categoryId: z
-      .string()
-      .regex(objectIdRegex, "ID nhóm ngành không hợp lệ")
-      .optional(),
+    categoryId: z.preprocess(
+      trimString,
+      z.string().regex(objectIdRegex, "ID nhóm ngành không hợp lệ").optional(),
+    ),
 
     name: z.preprocess(
       normalizeName,

@@ -4,6 +4,7 @@ import cookieParser from "cookie-parser";
 import connectDB from "./libs/db.js";
 import authRoute from "./routes/authRouter.js";
 import userRoute from "./routes/userRouter.js";
+import occupationRouter from "./routes/occupationRouter.js";
 import occupationCategoryRoute from "./routes/occupationCategoryRoute.js";
 import cors from "cors";
 import { authMiddleware } from "./middlewares/authMiddleware.js";
@@ -29,6 +30,7 @@ app.use("/api/auth", authRoute);
 app.use(authMiddleware);
 app.use("/api/users", userRoute);
 app.use("/api/occupation-categories", occupationCategoryRoute);
+app.use("/api/occupations", occupationRouter);
 connectDB().then(() => {
   app.listen(PORT, () => {
     console.log(`Server bắt đầu trên cổng ${PORT}`);
