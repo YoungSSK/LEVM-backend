@@ -21,6 +21,16 @@ const vocabularyLessonSchema = new mongoose.Schema(
 
     order: {
       type: Number,
+      required: true,
+      min: 1,
+    },
+    thumbnail: {
+      type: String,
+      default: "",
+    },
+
+    estimatedTime: {
+      type: Number,
       default: 0,
     },
 

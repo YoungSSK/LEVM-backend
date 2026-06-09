@@ -6,26 +6,14 @@ const wordSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
+      lowercase: true,
+      maxlength: 100,
     },
 
     pronunciation: {
       type: String,
       default: "",
-    },
-
-    meaning: {
-      type: String,
-      required: true,
-    },
-
-    exampleSentence: {
-      type: String,
-      default: "",
-    },
-
-    exampleMeaning: {
-      type: String,
-      default: "",
+      trim: true,
     },
 
     audioUrl: {
@@ -51,12 +39,37 @@ const wordSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  },
+  }
 );
 
 // Không cho phép tạo trùng từ
-wordSchema.index({ word: 1 }, { unique: true });
+wordSchema.index(
+  {
+    word: 1,
+  },
+  {
+    unique: true,
+  }
+);
 
-const Word = mongoose.model("Word", wordSchema);
+// Virtual Populate
+wordSchema.virtual("meanings", {
+  ref: "WordMeaning",
+  localField: "_id",
+  foreignField: "wordId",
+});
+
+wordSchema.set("toJSON", {
+  virtuals: true,
+});
+
+wordSchema.set("toObject", {
+  virtuals: true,
+});
+
+const Word = mongoose.model(
+  "Word",
+  wordSchema
+);
 
 export default Word;

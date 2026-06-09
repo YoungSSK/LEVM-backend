@@ -1,14 +1,8 @@
 import mongoose from "mongoose";
 
-const vocabularyLessonSchema = new mongoose.Schema(
+const vocabularyTopicSchema = new mongoose.Schema(
   {
-    topicId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "VocabularyTopic",
-      required: true,
-    },
-
-    title: {
+    name: {
       type: String,
       required: true,
       trim: true,
@@ -19,9 +13,20 @@ const vocabularyLessonSchema = new mongoose.Schema(
       default: "",
     },
 
-    order: {
+    thumbnail: {
+      type: String,
+      default: "",
+    },
+    lessonCount: {
       type: Number,
       default: 0,
+      min: 0,
+    },
+
+    wordCount: {
+      type: Number,
+      default: 0,
+      min: 0,
     },
 
     isActive: {
@@ -34,12 +39,10 @@ const vocabularyLessonSchema = new mongoose.Schema(
   },
 );
 
-// Không cho phép trùng tên bài học trong cùng topic
-vocabularyLessonSchema.index({ topicId: 1, itle: 1 }, { unique: true });
+vocabularyTopicSchema.index({ name: 1 }, { unique: true });
 
-const VocabularyLesson = mongoose.model(
-  "VocabularyLesson",
-  vocabularyLessonSchema,
+const VocabularyTopic = mongoose.model(
+  "VocabularyTopic",
+  vocabularyTopicSchema,
 );
-
-export default VocabularyLesson;
+export default VocabularyTopic;
