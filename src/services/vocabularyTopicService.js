@@ -96,3 +96,7 @@ export const changeStatus = async (topicId, isActive) => {
 
   return topicExist;
 };
+//Hàm lấy lessonCount và wordCount cả Active và Inactive
+export const getTopicStatistics = async (topicId) => {
+  const topic = await VocabularyTopic.findById(topicId);
+};
