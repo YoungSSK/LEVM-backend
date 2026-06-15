@@ -7,6 +7,7 @@ import {
   updatedVocabularyTopic,
   deletedVocabularyTopic,
   changeStatus,
+  getTopicStatistics,
 } from "../controllers/vocabularyTopicController.js";
 
 import authorMiddleware from "../middlewares/authorMiddleware.js";
@@ -64,5 +65,7 @@ router.delete(
   validate(topicIdParamsSchema, "params"),
   deletedVocabularyTopic,
 );
+// Lấy tổng trạng Lesson và wordCount active và inactive
+router.get(":id/statistics", authorMiddleware("admin"), getTopicStatistics);
 
 export default router;

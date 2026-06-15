@@ -1,4 +1,5 @@
 import VocabularyTopic from "../models/VocabularyTopic.js";
+import VocabularyLesson from "../models/VocabularyLesson.js";
 import AppError from "../utils/AppError.js";
 // Hàm tạo chủ đề mới
 export const createTopic = async (data) => {
@@ -99,4 +100,27 @@ export const changeStatus = async (topicId, isActive) => {
 //Hàm lấy lessonCount và wordCount cả Active và Inactive
 export const getTopicStatistics = async (topicId) => {
   const topic = await VocabularyTopic.findById(topicId);
+  if (!topic) {
+    throw new AppError("Topic không tồn tại", 404);
+  }
+  const totalLesson = await VocabularyLesson.countDocuments({ topicId });
+  const activeLesson = await VocabularyLesson.countDocuments({
+    topicId,
+    isActive: true,
+  });
+  const lessons = await VocabularyLesson.find({ topicId }).select(
+    "_id wordCount isActive",
+  );
+  const totalWord = lessons.reduce((sum, lesson) => sum + lesson.wordCount, 0);
+  const activeWord = lessons
+    .filter((lesson) => lesson.isActive)
+    .reduce((sum, lesson) => sum + lesson.wordCount, 0);
+  return {
+    totalLesson,
+    activeLesson,
+    inactiveLesson: totalLesson - activeLesson,
+    totalWord,
+    activeWord,
+    inactiveWord: totalWord - activeWord,
+  };
 };

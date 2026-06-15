@@ -99,3 +99,16 @@ export const changeStatus = async (req, res) => {
     });
   }
 };
+export const getTopicStatistics = async (req, res) => {
+  try {
+    const result = await vocabularyTopicService.getTopicStatistics(
+      req.params.id,
+    );
+    return res.status(200).json({ success: true, data: result });
+  } catch (error) {
+    console.error("Lỗi getTopicStatistics: ", error);
+    return res
+      .status(error.statusCode || 500)
+      .json({ success: false, message: error.message || "Lỗi hệ thống" });
+  }
+};
