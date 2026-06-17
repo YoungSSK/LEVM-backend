@@ -39,15 +39,6 @@ export const topicIdParamsSchema = z
 
 export const createLessonSchema = z
   .object({
-    topicId: z.preprocess(
-      trimString,
-      z
-        .string({
-          required_error: "Topic là bắt buộc",
-        })
-        .regex(objectIdRegex, "Topic không hợp lệ"),
-    ),
-
     title: z.preprocess(
       normalizeName,
       z
@@ -62,14 +53,6 @@ export const createLessonSchema = z
       normalizeDescription,
       z.string().max(500, "Mô tả tối đa 500 ký tự").optional().default(""),
     ),
-
-    order: z
-      .number({
-        invalid_type_error: "Thứ tự phải là số",
-      })
-      .int("Thứ tự phải là số nguyên")
-      .min(1, "Thứ tự phải lớn hơn 0")
-      .optional(),
 
     thumbnail: z.preprocess(
       trimString,
@@ -88,8 +71,6 @@ export const createLessonSchema = z
       .min(0, "Thời gian không được âm")
       .optional()
       .default(0),
-
-    isActive: z.boolean().optional().default(true),
   })
   .strict();
 
@@ -114,9 +95,10 @@ export const updateLessonSchema = z
       z.string().url("Thumbnail không hợp lệ").or(z.literal("")).optional(),
     ),
 
-    order: z.number().int().min(1).optional(),
-
-    estimatedTime: z.number().min(0).optional(),
+    estimatedTime: z
+      .preprocess((value) => Number(value), z.number().min(0))
+      .optional()
+      .default(0),
 
     isActive: z.boolean().optional(),
   })
@@ -124,28 +106,6 @@ export const updateLessonSchema = z
   .refine((data) => Object.keys(data).length > 0, {
     message: "Phải cung cấp ít nhất một trường để cập nhật",
   });
-
-export const lessonWordSchema = z
-  .object({
-    lessonId: z.preprocess(
-      trimString,
-      z.string().regex(objectIdRegex, "Lesson không hợp lệ"),
-    ),
-
-    wordId: z.preprocess(
-      trimString,
-      z.string().regex(objectIdRegex, "Word không hợp lệ"),
-    ),
-  })
-  .strict();
-
-export const changeStatusSchema = z
-  .object({
-    isActive: z.boolean({
-      required_error: "Trạng thái là bắt buộc",
-    }),
-  })
-  .strict();
 
 export const changeOrderSchema = z
   .object({
@@ -161,5 +121,35 @@ export const changeOrderSchema = z
         }),
       )
       .min(1, "Danh sách không được rỗng"),
+  })
+  .strict();
+
+export const lessonWordParamsSchema = z
+  .object({
+    lessonId: z.preprocess(
+      trimString,
+      z.string().regex(objectIdRegex, "Lesson không hợp lệ"),
+    ),
+  })
+  .strict();
+export const lessonWordDeleteParamsSchema = z
+  .object({
+    lessonId: z.preprocess(
+      trimString,
+      z.string().regex(objectIdRegex, "Lesson không hợp lệ"),
+    ),
+
+    wordId: z.preprocess(
+      trimString,
+      z.string().regex(objectIdRegex, "Word không hợp lệ"),
+    ),
+  })
+  .strict();
+export const addWordSchema = z
+  .object({
+    wordId: z.preprocess(
+      trimString,
+      z.string().regex(objectIdRegex, "Word không hợp lệ"),
+    ),
   })
   .strict();

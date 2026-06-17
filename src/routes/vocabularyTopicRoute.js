@@ -9,7 +9,11 @@ import {
   changeStatus,
   getTopicStatistics,
 } from "../controllers/vocabularyTopicController.js";
-
+import {
+  createVocabularyLesson,
+  getVocabularyLessonByTopic,
+  changeLessonOrder,
+} from "../controllers/vocabularyLessonController.js";
 import authorMiddleware from "../middlewares/authorMiddleware.js";
 import { validate } from "../middlewares/validateMiddleware.js";
 
@@ -19,7 +23,11 @@ import {
   updateTopicSchema,
   changeStatusSchema,
 } from "../validations/vocabularyTopicValidation.js";
-
+import {
+  topicIdParamsSchema as lessonTopicIdParamsSchema,
+  createLessonSchema,
+  changeOrderSchema,
+} from "../validations/vocabularyLessonValidation.js";
 const router = express.Router();
 
 // Lấy danh sách chủ đề
@@ -31,7 +39,12 @@ router.get(
   validate(topicIdParamsSchema, "params"),
   getVocabularyTopicById,
 );
-
+// Lấy danh sách lesson theo topic
+router.get(
+  "/:topicId/lessons",
+  validate(lessonTopicIdParamsSchema, "params"),
+  getVocabularyLessonByTopic,
+);
 // Tạo chủ đề mới
 router.post(
   "/",
@@ -66,6 +79,27 @@ router.delete(
   deletedVocabularyTopic,
 );
 // Lấy tổng trạng Lesson và wordCount active và inactive
-router.get(":id/statistics", authorMiddleware("admin"), getTopicStatistics);
+router.get(
+  "/:id/statistics",
+  authorMiddleware("admin"),
+  validate(topicIdParamsSchema, "params"),
+  getTopicStatistics,
+);
+// Tạo lesson mới trong topic
+router.post(
+  "/:topicId/lessons",
+  authorMiddleware("admin"),
+  validate(lessonTopicIdParamsSchema, "params"),
+  validate(createLessonSchema),
+  createVocabularyLesson,
+);
 
+// Thay đổi thứ tự lesson
+router.patch(
+  "/:topicId/lessons/order",
+  authorMiddleware("admin"),
+  validate(lessonTopicIdParamsSchema, "params"),
+  validate(changeOrderSchema),
+  changeLessonOrder,
+);
 export default router;
