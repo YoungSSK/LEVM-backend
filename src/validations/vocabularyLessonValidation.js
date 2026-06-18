@@ -151,5 +151,10 @@ export const addWordSchema = z
       trimString,
       z.string().regex(objectIdRegex, "Word không hợp lệ"),
     ),
+
+    wordMeaningId: z.preprocess(
+      trimString,
+      z.string().regex(objectIdRegex, "Nghĩa của từ không hợp lệ"),
+    ),
   })
   .strict();

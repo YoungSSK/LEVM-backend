@@ -9,7 +9,7 @@ export const deleted = async (wordId) => {};
 //Hàm lấy thông tin từ theo Id
 export const getById = async (wordId) => {};
 //Hàm lấy chi tiết thông tin của từ
-export const getDeatail = async (wordId) => {};
+export const getDetail = async (wordId) => {};
 //Hàm lấy danh sách tất cả từ
 export const getAll = async () => {};
 //Hàm tìm kiếm từ

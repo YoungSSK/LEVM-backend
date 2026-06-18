@@ -13,6 +13,12 @@ const vocabularyLessonWordSchema = new mongoose.Schema(
       ref: "Word",
       required: true,
     },
+
+    wordMeaningId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "WordMeaning",
+      required: true,
+    },
   },
   {
     timestamps: true,

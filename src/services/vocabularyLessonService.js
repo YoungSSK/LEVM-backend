@@ -3,6 +3,7 @@ import VocabularyLesson from "../models/VocabularyLesson.js";
 import VocabularyLessonWord from "../models/VocabularyLessonWord.js";
 import VocabularyTopic from "../models/VocabularyTopic.js";
 import Word from "../models/Word.js";
+import WordMeaning from "../models/WordMeaning.js";
 import AppError from "../utils/AppError.js";
 //Hàm tạo bài học mới
 export const createLesson = async (data) => {
@@ -170,8 +171,8 @@ export const getByTopic = async (topicId) => {
   return lessons;
 };
 
-//Hàm thêm từ vào bài học
-export const addWord = async (lessonId, wordId) => {
+//Hàm thêm từ vào bài học cùng nghĩa được chọn
+export const addWord = async (lessonId, wordId, wordMeaningId) => {
   const session = await mongoose.startSession();
 
   try {
@@ -190,6 +191,18 @@ export const addWord = async (lessonId, wordId) => {
       throw new AppError("Từ vựng không tồn tại", 404);
     }
 
+    const wordMeaningExist = await WordMeaning.findById(wordMeaningId).session(
+      session,
+    );
+
+    if (!wordMeaningExist) {
+      throw new AppError("Nghĩa của từ không tồn tại", 404);
+    }
+
+    if (String(wordMeaningExist.wordId) !== String(wordId)) {
+      throw new AppError("Nghĩa không thuộc từ đã chọn", 400);
+    }
+
     const duplicate = await VocabularyLessonWord.findOne({
       lessonId,
       wordId,
@@ -199,7 +212,10 @@ export const addWord = async (lessonId, wordId) => {
       throw new AppError("Từ đã tồn tại trong bài học", 400);
     }
 
-    await VocabularyLessonWord.create([{ lessonId, wordId }], { session });
+    await VocabularyLessonWord.create(
+      [{ lessonId, wordId, wordMeaningId }],
+      { session },
+    );
 
     await VocabularyLesson.findByIdAndUpdate(
       lessonId,
@@ -294,7 +310,14 @@ export const getWord = async (lessonId) => {
   }
   //Lấy word
   const words = await VocabularyLessonWord.find({ lessonId })
-    .populate("wordId")
+    .populate([
+      {
+        path: "wordId",
+      },
+      {
+        path: "wordMeaningId",
+      },
+    ])
     .lean();
   return words;
 };

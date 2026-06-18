@@ -79,7 +79,11 @@ export const deleteVocabularyLesson = async (req, res) => {
 //Thêm từ vào bài học
 export const addWordToLesson = async (req, res) => {
   try {
-    await vocabularyLessonService.addWord(req.params.lessonId, req.body.wordId);
+    await vocabularyLessonService.addWord(
+      req.params.lessonId,
+      req.body.wordId,
+      req.body.wordMeaningId,
+    );
     return res
       .status(200)
       .json({ success: true, message: "Thêm từ vào bài học thành công" });

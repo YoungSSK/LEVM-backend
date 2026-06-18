@@ -1,4 +1,4 @@
-import WordMeaning from "../models/WordMeaning";
+import WordMeaning from "../models/WordMeaning.js";
 
 //Hàm tạo mới Meaning
 export const createMeaning = async (data) => {};
