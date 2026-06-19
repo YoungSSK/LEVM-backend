@@ -161,3 +161,25 @@ export const changeLessonStatus = async (req, res) => {
     });
   }
 };
+//Lấy từ theo format study
+export const getWordsForStudy = async (req, res) => {
+  try {
+    // Gọi service lấy danh sách từ phục vụ màn hình học
+    const result = await vocabularyLessonService.getWordsForStudy(
+      req.params.lessonId,
+    );
+
+    // Trả dữ liệu cho client
+    return res.status(200).json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    // Chuẩn hóa lỗi trả về
+    console.error("Lỗi getWordsForStudy:", error);
+    return res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || "Lỗi hệ thống",
+    });
+  }
+};

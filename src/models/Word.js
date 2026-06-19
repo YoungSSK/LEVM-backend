@@ -10,15 +10,26 @@ const wordSchema = new mongoose.Schema(
       maxlength: 100,
     },
 
-    pronunciation: {
-      type: String,
-      default: "",
-      trim: true,
+    pronunciations: {
+      us: {
+        type: String,
+        default: "",
+      },
+      uk: {
+        type: String,
+        default: "",
+      },
     },
 
-    audioUrl: {
-      type: String,
-      default: "",
+    audioUrls: {
+      us: {
+        type: String,
+        default: "",
+      },
+      uk: {
+        type: String,
+        default: "",
+      },
     },
 
     imageUrl: {
@@ -39,7 +50,7 @@ const wordSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 // Không cho phép tạo trùng từ
@@ -49,7 +60,7 @@ wordSchema.index(
   },
   {
     unique: true,
-  }
+  },
 );
 
 // Virtual Populate
@@ -67,9 +78,6 @@ wordSchema.set("toObject", {
   virtuals: true,
 });
 
-const Word = mongoose.model(
-  "Word",
-  wordSchema
-);
+const Word = mongoose.model("Word", wordSchema);
 
 export default Word;

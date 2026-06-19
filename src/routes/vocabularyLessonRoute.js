@@ -8,6 +8,7 @@ import {
   getLessonWords,
   addWordToLesson,
   removeWordFromLesson,
+  getWordsForStudy,
 } from "../controllers/vocabularyLessonController.js";
 
 import authorMiddleware from "../middlewares/authorMiddleware.js";
@@ -37,7 +38,12 @@ router.get(
   validate(lessonWordParamsSchema, "params"),
   getLessonWords,
 );
-
+//Lấy danh từ trong lesson theo format study
+router.get(
+  "/:lessonId/study-words",
+  validate(lessonWordParamsSchema, "params"),
+  getWordsForStudy,
+);
 //Admin route
 
 // Cập nhật bài học

@@ -191,9 +191,8 @@ export const addWord = async (lessonId, wordId, wordMeaningId) => {
       throw new AppError("Từ vựng không tồn tại", 404);
     }
 
-    const wordMeaningExist = await WordMeaning.findById(wordMeaningId).session(
-      session,
-    );
+    const wordMeaningExist =
+      await WordMeaning.findById(wordMeaningId).session(session);
 
     if (!wordMeaningExist) {
       throw new AppError("Nghĩa của từ không tồn tại", 404);
@@ -212,10 +211,9 @@ export const addWord = async (lessonId, wordId, wordMeaningId) => {
       throw new AppError("Từ đã tồn tại trong bài học", 400);
     }
 
-    await VocabularyLessonWord.create(
-      [{ lessonId, wordId, wordMeaningId }],
-      { session },
-    );
+    await VocabularyLessonWord.create([{ lessonId, wordId, wordMeaningId }], {
+      session,
+    });
 
     await VocabularyLesson.findByIdAndUpdate(
       lessonId,
@@ -444,4 +442,64 @@ export const changeStatus = async (lessonId) => {
   } finally {
     await session.endSession();
   }
+};
+//Hàm lấy từ trong lesson để học
+export const getWordsForStudy = async (lessonId) => {
+  //Kiểm tra lesson có tồn tại không
+  const lesson = await VocabularyLesson.findById(lessonId)
+    .populate({
+      path: "topicId",
+      select: "_id name",
+    })
+    .lean();
+  if (!lesson) {
+    throw new AppError("Lesson không tồn tại", 404);
+  }
+  // Lấy word-meaning của từ
+  const lessonWords = await VocabularyLessonWord.find({ lessonId })
+    .populate([
+      {
+        path: "wordId",
+        select: "word pronunciations audioUrls imageUrl difficulty isActive",
+      },
+      {
+        path: "wordMeaningId",
+        select:
+          "meaning partOfSpeech exampleSentence exampleMeaning isPrimary order isActive",
+      },
+    ])
+    .sort({ createdAt: 1 })
+    .lean();
+  // Lọc record hợp lệ format phục vụ study
+  const words = lessonWords
+    .filter((item) => item.wordId && item.wordMeaningId)
+    .map((item) => ({
+      lessonWordId: item._id,
+      wordId: item.wordId._id,
+      word: item.wordId.word,
+      pronunciations: item.wordId.pronunciations,
+      audioUrls: item.wordId.audioUrls,
+      imageUrl: item.wordId.imageUrl,
+      difficulty: item.wordId.difficulty,
+      meaningId: item.wordMeaningId._id,
+      meaning: item.wordMeaningId.meaning,
+      partOfSpeech: item.wordMeaningId.partOfSpeech,
+      exampleSentence: item.wordMeaningId.exampleSentence,
+      exampleMeaning: item.wordMeaningId.exampleMeaning,
+      isPrimary: item.wordMeaningId.isPrimary,
+      order: item.wordMeaningId.order,
+    }));
+  // return
+  return {
+    lesson: {
+      _id: lesson._id,
+      title: lesson.title,
+      description: lesson.description,
+      estimatedTime: lesson.estimatedTime,
+      topicId: lesson.topicId?._id,
+      topicName: lesson.topicId?.name,
+    },
+    totalWords: words.length,
+    words,
+  };
 };
