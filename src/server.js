@@ -6,6 +6,9 @@ import authRoute from "./routes/authRouter.js";
 import userRoute from "./routes/userRouter.js";
 import occupationRouter from "./routes/occupationRouter.js";
 import occupationCategoryRoute from "./routes/occupationCategoryRoute.js";
+import vocabularyTopicRoutes from "./routes/vocabularyTopicRoute.js";
+import vocabularyLessonRoutes from "./routes/vocabularyLessonRoute.js";
+import wordRoute from "./routes/wordRoute.js";
 import cors from "cors";
 import { authMiddleware } from "./middlewares/authMiddleware.js";
 import swaggerUi from "swagger-ui-express";
@@ -32,6 +35,9 @@ app.use(authMiddleware);
 app.use("/api/users", userRoute);
 app.use("/api/occupation-categories", occupationCategoryRoute);
 app.use("/api/occupations", occupationRouter);
+app.use("/api/vocabulary-topics", vocabularyTopicRoutes);
+app.use("/api/vocabulary-lessons", vocabularyLessonRoutes);
+app.use("/api/words", wordRoute);
 connectDB().then(() => {
   app.listen(PORT, () => {
     console.log(`Server bắt đầu trên cổng ${PORT}`);
