@@ -3,8 +3,17 @@ import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import connectDB from "./libs/db.js";
 import authRoute from "./routes/authRouter.js";
+import userRoute from "./routes/userRouter.js";
+import occupationRouter from "./routes/occupationRouter.js";
+import occupationCategoryRoute from "./routes/occupationCategoryRoute.js";
+import vocabularyTopicRoutes from "./routes/vocabularyTopicRoute.js";
+import vocabularyLessonRoutes from "./routes/vocabularyLessonRoute.js";
+import wordRoute from "./routes/wordRoute.js";
+import cors from "cors";
+import { authMiddleware } from "./middlewares/authMiddleware.js";
 import swaggerUi from "swagger-ui-express";
 import fs from "fs";
+
 dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5001;
@@ -12,16 +21,23 @@ app.set("trust proxy", 1);
 //middleware
 app.use(express.json());
 app.use(cookieParser());
-
+app.use(cors({ origin: process.env.CLIENT_URL, credentials: true }));
 // swagger
 const swaggerDocument = JSON.parse(
   fs.readFileSync("./src/swagger.json", "utf8"),
 );
-
+//Swager
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 //public router
 app.use("/api/auth", authRoute);
-
+//pivate router
+app.use(authMiddleware);
+app.use("/api/users", userRoute);
+app.use("/api/occupation-categories", occupationCategoryRoute);
+app.use("/api/occupations", occupationRouter);
+app.use("/api/vocabulary-topics", vocabularyTopicRoutes);
+app.use("/api/vocabulary-lessons", vocabularyLessonRoutes);
+app.use("/api/words", wordRoute);
 connectDB().then(() => {
   app.listen(PORT, () => {
     console.log(`Server bắt đầu trên cổng ${PORT}`);

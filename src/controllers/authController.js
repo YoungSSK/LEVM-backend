@@ -32,11 +32,12 @@ export const Login = async (req, res) => {
       sameSite: "none",
       maxAge: 14 * 24 * 60 * 60 * 1000,
     });
-
+    const displayName = user.displayName || user.username;
     return res.status(200).json({
       success: true,
-      message: `User ${user.username} đã đăng nhập với vai trò ${user.role}`,
+      message: `User ${displayName} đã đăng nhập với vai trò ${user.role}`,
       accessToken,
+      refreshToken,
     });
   } catch (error) {
     console.error("Lỗi khi đăng nhập: ", error);
@@ -51,7 +52,7 @@ export const Logout = async (req, res) => {
   try {
     const refreshToken = req.cookies.refreshToken;
     await authService.logout(refreshToken);
-    return res.sendStatus(200).json({ success: true });
+    return res.status(200).json({ success: true });
   } catch (error) {
     console.error("Lỗi khi đăng xuất", error);
     return res

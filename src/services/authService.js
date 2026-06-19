@@ -26,6 +26,7 @@ export const register = async (data) => {
   // tạo User mới
   await User.create({
     username,
+    displayName: username,
     email,
     hashPassword,
   });
@@ -43,7 +44,7 @@ export const login = async (data, ipAddress, userAgent) => {
   }
   // Tạo access Token
   const accessToken = jwt.sign(
-    { userId: user._id },
+    { userId: user._id, email: user.email, role: user.role },
     process.env.ACCESS_TOKEN_SECRET,
     { expiresIn: ACCESS_TOKEN_TTL },
   );
