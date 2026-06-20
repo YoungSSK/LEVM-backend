@@ -10,10 +10,12 @@ export const validate = (schema, location = "body") => {
     if (!result.success) {
       return res.status(400).json({
         success: false,
-        errors: result.error.flatten().fieldErrors,
+        errors: {
+          fieldErrors: result.error.flatten().fieldErrors,
+          formErrors: result.error.flatten().formErrors,
+        },
       });
     }
-
     req.validatedData = result.data;
     next();
   };

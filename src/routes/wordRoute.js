@@ -11,6 +11,12 @@ import {
   deleteWord,
 } from "../controllers/wordController.js";
 
+import {
+  createMeaning,
+  getMeaningByWord,
+  setPrimary,
+} from "../controllers/wordMeaningController.js";
+
 import authorMiddleware from "../middlewares/authorMiddleware.js";
 import { validate } from "../middlewares/validateMiddleware.js";
 
@@ -22,6 +28,12 @@ import {
   searchWordQuerySchema,
   changeStatusWordSchema,
 } from "../validations/wordValidation.js";
+
+import {
+  wordMeaningWordIdParamsSchema,
+  setPrimaryMeaningParamsSchema,
+  createMeaningSchema,
+} from "../validations/wordMeaningValidation.js";
 
 const router = express.Router();
 
@@ -40,6 +52,28 @@ router.get(
   authorMiddleware("admin"),
   validate(searchWordQuerySchema, "query"),
   searchWords,
+);
+
+// Nghia cua tu
+router.get(
+  "/:wordId/meanings",
+  validate(wordMeaningWordIdParamsSchema, "params"),
+  getMeaningByWord,
+);
+
+router.post(
+  "/:wordId/meanings",
+  authorMiddleware("admin"),
+  validate(wordMeaningWordIdParamsSchema, "params"),
+  validate(createMeaningSchema),
+  createMeaning,
+);
+
+router.patch(
+  "/:wordId/meanings/:meaningId/primary",
+  authorMiddleware("admin"),
+  validate(setPrimaryMeaningParamsSchema, "params"),
+  setPrimary,
 );
 
 // Chi tiet tu vung
