@@ -32,7 +32,7 @@ Hệ thống có 2 vai trò chính:
 - Hỗ trợ API: cookie-parser, cors, swagger-ui-express, swagger-jsdoc
 - Công cụ dev: nodemon
 
-> Theo định hướng toàn hệ thống, phần giao diện có thể sử dụng React, TypeScript, Tailwind CSS và Shadcn trong repository frontend riêng.
+> Theo định hướng toàn hệ thống, phần giao diện có thể sử dụng React, TypeScript, Tailwind CSS và Shadcn trong repository frontend riêng cho trang quản trị của Admin
 
 ## Chức năng backend hiện tại
 

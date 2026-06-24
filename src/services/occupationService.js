@@ -30,6 +30,7 @@ export const create = async (data) => {
     description,
     isActive: true,
   });
+  return occupation;
 };
 //Hàm update ngành nghề
 export const update = async (id, data) => {
