@@ -16,7 +16,7 @@ export const create = async (data) => {
 };
 // Hàm lấy danh sách nhóm  ngành
 export const getAll = async () => {
-  return await OccupationCategory.find({ isActive: true });
+  return await OccupationCategory.find();
 };
 // Hàm cập nhật lại nhóm ngành nghề
 export const update = async (id, data) => {
