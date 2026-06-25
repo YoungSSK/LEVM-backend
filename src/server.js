@@ -9,6 +9,8 @@ import occupationCategoryRoute from "./routes/occupationCategoryRoute.js";
 import vocabularyTopicRoutes from "./routes/vocabularyTopicRoute.js";
 import vocabularyLessonRoutes from "./routes/vocabularyLessonRoute.js";
 import wordRoute from "./routes/wordRoute.js";
+import wordMeaningRoute from "./routes/wordMeaningRoute.js";
+import grammarTopicRoute from "./routes/grammarTopicRoute.js";
 import cors from "cors";
 import { authMiddleware } from "./middlewares/authMiddleware.js";
 import swaggerUi from "swagger-ui-express";
@@ -38,6 +40,8 @@ app.use("/api/occupations", occupationRouter);
 app.use("/api/vocabulary-topics", vocabularyTopicRoutes);
 app.use("/api/vocabulary-lessons", vocabularyLessonRoutes);
 app.use("/api/words", wordRoute);
+app.use("/api/word-meanings", wordMeaningRoute);
+app.use("/api/grammar-topics", grammarTopicRoute);
 connectDB().then(() => {
   app.listen(PORT, () => {
     console.log(`Server bắt đầu trên cổng ${PORT}`);

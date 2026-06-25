@@ -38,6 +38,7 @@ export const Login = async (req, res) => {
       message: `User ${displayName} đã đăng nhập với vai trò ${user.role}`,
       accessToken,
       refreshToken,
+      role:user.role
     });
   } catch (error) {
     console.error("Lỗi khi đăng nhập: ", error);
