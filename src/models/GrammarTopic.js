@@ -52,15 +52,7 @@ const grammarTopicSchema = new mongoose.Schema(
   }
 );
 
-grammarTopicSchema.index(
-  { name: 1 },
-  { unique: true }
-);
-
-grammarTopicSchema.index(
-  { slug: 1 },
-  { unique: true }
-);
+// Index cho name và slug đã được tạo tự động qua unique:true trong field definitions
 
 grammarTopicSchema.index({
   order: 1,

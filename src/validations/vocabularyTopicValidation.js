@@ -2,6 +2,8 @@ import { z } from "zod";
 
 const objectIdRegex = /^[0-9a-fA-F]{24}$/;
 
+const slugRegex = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
 const trimString = (value) =>
   typeof value === "string" ? value.trim() : value;
 
@@ -22,7 +24,19 @@ export const topicIdParamsSchema = z
   .object({
     id: z.preprocess(
       trimString,
-      z.string().regex(objectIdRegex, "ID chủ đề không hợp lệ"),
+      z.string().refine(
+        (val) => objectIdRegex.test(val) || /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(val),
+        "ID hoặc slug chủ đề không hợp lệ",
+      ),
+    ),
+  })
+  .strict();
+
+export const topicSlugParamsSchema = z
+  .object({
+    slug: z.preprocess(
+      trimString,
+      z.string().regex(slugRegex, "Slug không hợp lệ"),
     ),
   })
   .strict();
@@ -57,6 +71,15 @@ export const createTopicSchema = z
         .optional()
         .default(""),
     ),
+
+    order: z
+      .number({
+        invalid_type_error: "Thứ tự phải là số",
+      })
+      .int("Thứ tự phải là số nguyên")
+      .nonnegative("Thứ tự không được âm")
+      .optional()
+      .default(0),
   })
   .strict();
 
@@ -84,6 +107,14 @@ export const updateTopicSchema = z
         .or(z.literal(""))
         .optional(),
     ),
+
+    order: z
+      .number({
+        invalid_type_error: "Thứ tự phải là số",
+      })
+      .int("Thứ tự phải là số nguyên")
+      .nonnegative("Thứ tự không được âm")
+      .optional(),
   })
   .strict()
   .refine((data) => Object.keys(data).length > 0, {

@@ -63,7 +63,10 @@ export const wordMeaningWordIdParamsSchema = z
   .object({
     wordId: z.preprocess(
       trimString,
-      z.string().regex(objectIdRegex, "Word ID không hợp lệ"),
+      z.string().refine(
+        (val) => objectIdRegex.test(val) || /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(val),
+        "Word ID hoac slug khong hop le",
+      ),
     ),
   })
   .strict();

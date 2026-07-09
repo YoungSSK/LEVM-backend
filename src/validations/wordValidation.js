@@ -64,7 +64,10 @@ export const wordIdParamsSchema = z
   .object({
     id: z.preprocess(
       trimString,
-      z.string().regex(objectIdRegex, "ID tu vung khong hop le"),
+      z.string().refine(
+        (val) => objectIdRegex.test(val) || /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(val),
+        "ID hoặc slug từ vựng không hợp lệ",
+      ),
     ),
   })
   .strict();

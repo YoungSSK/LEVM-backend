@@ -1,4 +1,7 @@
 import * as wordService from "../services/wordService.js";
+
+const objectIdRegex = /^[0-9a-fA-F]{24}$/;
+
 //Create word
 export const createWord = async (req, res) => {
   try {
@@ -34,11 +37,14 @@ export const updateWord = async (req, res) => {
     });
   }
 };
-//Lấy word theo id
+//Lấy word theo id hoặc slug
 export const getWordById = async (req, res) => {
   try {
-    const word = await wordService.getById(req.params.id);
-
+    const { id } = req.params;
+    const isObjectId = objectIdRegex.test(id);
+    const word = isObjectId
+      ? await wordService.getById(id)
+      : await wordService.getBySlug(id);
     return res.status(200).json({
       success: true,
       data: word,
@@ -51,11 +57,14 @@ export const getWordById = async (req, res) => {
     });
   }
 };
-//Lấy word detail
+//Lấy word detail theo id hoặc slug
 export const getWordDetail = async (req, res) => {
   try {
-    const word = await wordService.getDetail(req.params.id);
-
+    const { id } = req.params;
+    const isObjectId = objectIdRegex.test(id);
+    const word = isObjectId
+      ? await wordService.getDetail(id)
+      : await wordService.getDetailBySlug(id);
     return res.status(200).json({
       success: true,
       data: word,

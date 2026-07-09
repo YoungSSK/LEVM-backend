@@ -1,5 +1,7 @@
 import * as vocabularyLessonService from "../services/vocabularyLessonService.js";
 
+const objectIdRegex = /^[0-9a-fA-F]{24}$/;
+
 // Tạo bài học mới
 export const createVocabularyLesson = async (req, res) => {
   try {
@@ -17,13 +19,29 @@ export const createVocabularyLesson = async (req, res) => {
       .json({ success: false, message: error.message || "Lỗi hệ thống" });
   }
 };
-//Lấy chi tiết bài học
+//Lấy chi tiết bài học (hỗ trợ cả id và slug)
 export const getVocabularyLessonById = async (req, res) => {
   try {
-    const lesson = await vocabularyLessonService.getById(req.params.id);
+    const { id } = req.params;
+    const isObjectId = objectIdRegex.test(id);
+    const lesson = isObjectId
+      ? await vocabularyLessonService.getById(id)
+      : await vocabularyLessonService.getBySlug(id);
     return res.status(200).json({ success: true, data: lesson });
   } catch (error) {
     console.error("Lỗi getVocabularyLesson: ", error);
+    return res
+      .status(error.statusCode || 500)
+      .json({ success: false, message: error.message || "Lỗi hệ thống" });
+  }
+};
+//Lấy chi tiết bài học theo slug
+export const getVocabularyLessonBySlug = async (req, res) => {
+  try {
+    const lesson = await vocabularyLessonService.getBySlug(req.params.slug);
+    return res.status(200).json({ success: true, data: lesson });
+  } catch (error) {
+    console.error("Lỗi getVocabularyLessonBySlug: ", error);
     return res
       .status(error.statusCode || 500)
       .json({ success: false, message: error.message || "Lỗi hệ thống" });
@@ -81,8 +99,8 @@ export const addWordToLesson = async (req, res) => {
   try {
     await vocabularyLessonService.addWord(
       req.params.lessonId,
-      req.body.wordId,
-      req.body.wordMeaningId,
+      req.validatedData.wordId,
+      req.validatedData.wordMeaningId,
     );
     return res
       .status(200)

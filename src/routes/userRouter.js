@@ -3,7 +3,9 @@ import {
   fetchMe,
   updateProfile,
   changePassword,
+  updateAvatar,
 } from "../controllers/userController.js";
+import uploadAvatar from "../middlewares/uploadAvatarMiddleware.js";
 import { validate } from "../middlewares/validateMiddleware.js";
 import {
   updateUserSchema,
@@ -19,4 +21,7 @@ router.patch(
   validate(changePasswordUserSchema),
   changePassword,
 );
+
+router.patch("/avatar", uploadAvatar, updateAvatar);
+
 export default router;

@@ -1,6 +1,7 @@
 import VocabularyTopic from "../models/VocabularyTopic.js";
 import VocabularyLesson from "../models/VocabularyLesson.js";
 import AppError from "../utils/AppError.js";
+import slugify from "slugify";
 // Hàm tạo chủ đề mới
 export const createTopic = async (data) => {
   const { name, description, thumbnail, lessonCount, wordCount, isActive } =
@@ -9,8 +10,10 @@ export const createTopic = async (data) => {
   if (duplicateName) {
     throw new AppError("Tên chủ đề đã tồn tại", 400);
   }
+  const slug = slugify(name, { lower: true, strict: true, locale: "vi" });
   const newTopic = await VocabularyTopic.create({
     name,
+    slug,
     description,
     thumbnail,
     lessonCount,
@@ -42,6 +45,7 @@ export const updateTopic = async (topicId, data) => {
     throw new AppError("Topic không tồn tại", 404);
   }
   const { name, description, thumbnail } = data;
+  const updatedData = {};
   if (name !== undefined) {
     const duplicateName = await VocabularyTopic.findOne({
       name,
@@ -50,10 +54,16 @@ export const updateTopic = async (topicId, data) => {
     if (duplicateName) {
       throw new AppError("Tên chủ đề đã tồn tại", 400);
     }
-  }
-  const updatedData = {};
-  if (name !== undefined) {
+    const slug = slugify(name, { lower: true, strict: true, locale: "vi" });
+    const duplicateSlug = await VocabularyTopic.findOne({
+      slug,
+      _id: { $ne: topicId },
+    });
+    if (duplicateSlug) {
+      throw new AppError("Slug đã tồn tại", 400);
+    }
     updatedData.name = name;
+    updatedData.slug = slug;
   }
   if (description !== undefined) {
     updatedData.description = description;
@@ -79,6 +89,14 @@ export const deletedTopic = async (topicId) => {
 //Hàm lấy chi tiết 1 chủ đề
 export const getTopicById = async (topicId) => {
   const topic = await VocabularyTopic.findById(topicId).lean();
+  if (!topic) {
+    throw new AppError("Topic không tồn tại", 404);
+  }
+  return topic;
+};
+//Hàm lấy chi tiết 1 chủ đề theo slug
+export const getTopicBySlug = async (slug) => {
+  const topic = await VocabularyTopic.findOne({ slug, isActive: true }).lean();
   if (!topic) {
     throw new AppError("Topic không tồn tại", 404);
   }

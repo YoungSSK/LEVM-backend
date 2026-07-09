@@ -1,5 +1,8 @@
 
 import * as vocabularyTopicService from "../services/vocabularyTopicService.js";
+
+const objectIdRegex = /^[0-9a-fA-F]{24}$/;
+
 // Tạo chủ đề mới
 export const createVocabularyTopic = async (req, res) => {
   try {
@@ -33,10 +36,14 @@ export const getAllVocabularyTopic = async (req, res) => {
       .json({ success: false, message: error.message || "Lỗi hệ thống" });
   }
 };
-// Lấy chi tiết chủ đề
+// Lấy chi tiết chủ đề (hỗ trợ cả id và slug)
 export const getVocabularyTopicById = async (req, res) => {
   try {
-    const topic = await vocabularyTopicService.getTopicById(req.params.id);
+    const { id } = req.params;
+    const isObjectId = objectIdRegex.test(id);
+    const topic = isObjectId
+      ? await vocabularyTopicService.getTopicById(id)
+      : await vocabularyTopicService.getTopicBySlug(id);
     return res.status(200).json({ success: true, data: topic });
   } catch (error) {
     console.error("Lỗi getTopicById: ");

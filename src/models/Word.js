@@ -10,6 +10,14 @@ const wordSchema = new mongoose.Schema(
       maxlength: 100,
     },
 
+    slug: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
+    },
+
     pronunciations: {
       us: {
         type: String,

@@ -77,6 +77,21 @@ const grammarLessonSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+
+    // Loại bài học: 'theory' = lý thuyết, 'exercise' = bài tập
+    lessonType: {
+      type: String,
+      enum: ["theory", "exercise"],
+      default: "theory",
+    },
+
+    // Bài học cha — chỉ có khi lessonType = 'exercise'
+    // Trỏ đến _id của GrammarLesson có lessonType = 'theory'
+    parentLessonId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "GrammarLesson",
+      default: null,
+    },
   },
   {
     timestamps: true,
@@ -100,15 +115,8 @@ grammarLessonSchema.index({
   order: 1,
 });
 
-// Tăng tốc tìm kiếm theo slug
-grammarLessonSchema.index(
-  {
-    slug: 1,
-  },
-  {
-    unique: true,
-  },
-);
+// Index cho slug đã được tạo tự động qua unique:true trong field definition
+grammarLessonSchema.index({ topicId: 1, parentLessonId: 1, order: 1 });
 
 const GrammarLesson = mongoose.model("GrammarLesson", grammarLessonSchema);
 

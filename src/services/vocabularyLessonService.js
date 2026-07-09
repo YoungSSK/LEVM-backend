@@ -5,6 +5,24 @@ import VocabularyTopic from "../models/VocabularyTopic.js";
 import Word from "../models/Word.js";
 import WordMeaning from "../models/WordMeaning.js";
 import AppError from "../utils/AppError.js";
+import slugify from "slugify";
+
+// Hàm sinh slug duy nhất
+const generateUniqueSlug = async (title) => {
+  const baseSlug = slugify(title, {
+    lower: true,
+    strict: true,
+    trim: true,
+    locale: "vi",
+  });
+  let slug = baseSlug;
+  let counter = 1;
+  while (await VocabularyLesson.exists({ slug })) {
+    slug = `${baseSlug}-${counter}`;
+    counter++;
+  }
+  return slug;
+};
 //Hàm tạo bài học mới
 export const createLesson = async (data) => {
   const session = await mongoose.startSession();
@@ -31,11 +49,14 @@ export const createLesson = async (data) => {
 
     const order = lastLesson ? lastLesson.order + 1 : 1;
 
+    const slug = await generateUniqueSlug(title);
+
     const [lesson] = await VocabularyLesson.create(
       [
         {
           topicId,
           title,
+          slug,
           description,
           thumbnail,
           estimatedTime,
@@ -71,24 +92,28 @@ export const createLesson = async (data) => {
 
 //Hàm cập nhật bài học
 export const updateLesson = async (lessonId, data) => {
-  const lessonExist = await VocabularyLesson.findById(lessonId);
+  const isObjectId = /^[0-9a-fA-F]{24}$/.test(lessonId);
+  const lessonExist = isObjectId
+    ? await VocabularyLesson.findById(lessonId)
+    : await VocabularyLesson.findOne({ slug: lessonId });
+
   if (!lessonExist) {
     throw new AppError("Lesson không tồn tại", 404);
   }
   const { title, description, thumbnail, estimatedTime } = data;
+  const updatedData = {};
   if (title !== undefined) {
     const duplicateTitle = await VocabularyLesson.findOne({
       topicId: lessonExist.topicId,
       title,
-      _id: { $ne: lessonId },
+      _id: { $ne: lessonExist._id },
     });
     if (duplicateTitle) {
       throw new AppError("Tên bài học đã tồn tại", 400);
     }
-  }
-  const updatedData = {};
-  if (title !== undefined) {
+    const slug = await generateUniqueSlug(title);
     updatedData.title = title;
+    updatedData.slug = slug;
   }
   if (description !== undefined) {
     updatedData.description = description;
@@ -101,7 +126,7 @@ export const updateLesson = async (lessonId, data) => {
   }
   //Update data
   const updatedLesson = await VocabularyLesson.findByIdAndUpdate(
-    lessonId,
+    lessonExist._id,
     updatedData,
     { new: true },
   );
@@ -115,14 +140,16 @@ export const deleteLesson = async (lessonId) => {
   try {
     session.startTransaction();
 
-    const lessonExist =
-      await VocabularyLesson.findById(lessonId).session(session);
+    const isObjectId = /^[0-9a-fA-F]{24}$/.test(lessonId);
+    const lessonExist = isObjectId
+      ? await VocabularyLesson.findById(lessonId).session(session)
+      : await VocabularyLesson.findOne({ slug: lessonId }).session(session);
 
     if (!lessonExist) {
       throw new AppError("Lesson không tồn tại", 404);
     }
 
-    await VocabularyLessonWord.deleteMany({ lessonId }, { session });
+    await VocabularyLessonWord.deleteMany({ lessonId: lessonExist._id }, { session });
 
     await VocabularyTopic.findByIdAndUpdate(
       lessonExist.topicId,
@@ -137,7 +164,7 @@ export const deleteLesson = async (lessonId) => {
       },
     );
 
-    await VocabularyLesson.findByIdAndDelete(lessonId, {
+    await VocabularyLesson.findByIdAndDelete(lessonExist._id, {
       session,
     });
 
@@ -158,14 +185,25 @@ export const getById = async (lessonId) => {
   }
   return lesson;
 };
-
-//Hàm lấy danh sách bài học theo chủ đề
+//Hàm lấy bài học theo slug
+export const getBySlug = async (slug) => {
+  const lesson = await VocabularyLesson.findOne({ slug, isActive: true }).lean();
+  if (!lesson) {
+    throw new AppError("Lesson không tồn tại", 404);
+  }
+  return lesson;
+};
+//Hàm lấy danh sách bài học theo chủ đề (hỗ trợ id hoặc slug)
 export const getByTopic = async (topicId) => {
-  const topicExist = await VocabularyTopic.findById(topicId);
-  if (!topicExist) {
+  const objectIdRegex = /^[0-9a-fA-F]{24}$/;
+  const isObjectId = objectIdRegex.test(topicId);
+  const topic = isObjectId
+    ? await VocabularyTopic.findById(topicId).lean()
+    : await VocabularyTopic.findOne({ slug: topicId }).lean();
+  if (!topic) {
     throw new AppError("Topic không tồn tại", 404);
   }
-  const lessons = await VocabularyLesson.find({ topicId })
+  const lessons = await VocabularyLesson.find({ topicId: topic._id })
     .sort({ order: 1 })
     .lean();
   return lessons;
@@ -178,8 +216,10 @@ export const addWord = async (lessonId, wordId, wordMeaningId) => {
   try {
     session.startTransaction();
 
-    const lessonExist =
-      await VocabularyLesson.findById(lessonId).session(session);
+    const isObjectId = /^[0-9a-fA-F]{24}$/.test(lessonId);
+    const lessonExist = isObjectId
+      ? await VocabularyLesson.findById(lessonId).session(session)
+      : await VocabularyLesson.findOne({ slug: lessonId }).session(session);
 
     if (!lessonExist) {
       throw new AppError("Lesson không tồn tại", 404);
@@ -203,7 +243,7 @@ export const addWord = async (lessonId, wordId, wordMeaningId) => {
     }
 
     const duplicate = await VocabularyLessonWord.findOne({
-      lessonId,
+      lessonId: lessonExist._id,
       wordId,
     }).session(session);
 
@@ -211,12 +251,12 @@ export const addWord = async (lessonId, wordId, wordMeaningId) => {
       throw new AppError("Từ đã tồn tại trong bài học", 400);
     }
 
-    await VocabularyLessonWord.create([{ lessonId, wordId, wordMeaningId }], {
+    await VocabularyLessonWord.create([{ lessonId: lessonExist._id, wordId, wordMeaningId }], {
       session,
     });
 
     await VocabularyLesson.findByIdAndUpdate(
-      lessonId,
+      lessonExist._id,
       { $inc: { wordCount: 1 } },
       { session },
     );
@@ -249,14 +289,18 @@ export const removeWord = async (lessonId, wordId) => {
   try {
     session.startTransaction();
 
-    const lesson = await VocabularyLesson.findById(lessonId).session(session);
+    const isObjectId = /^[0-9a-fA-F]{24}$/.test(lessonId);
+    const lesson = isObjectId
+      ? await VocabularyLesson.findById(lessonId).session(session)
+      : await VocabularyLesson.findOne({ slug: lessonId }).session(session);
+
 
     if (!lesson) {
       throw new AppError("Lesson không tồn tại", 404);
     }
 
     const relation = await VocabularyLessonWord.findOne({
-      lessonId,
+      lessonId: lesson._id,
       wordId,
     }).session(session);
 
@@ -264,10 +308,10 @@ export const removeWord = async (lessonId, wordId) => {
       throw new AppError("Từ không tồn tại trong bài học", 404);
     }
 
-    await VocabularyLessonWord.deleteOne({ lessonId, wordId }, { session });
+    await VocabularyLessonWord.deleteOne({ lessonId: lesson._id, wordId }, { session });
 
     await VocabularyLesson.findByIdAndUpdate(
-      lessonId,
+      lesson._id,
       {
         $inc: {
           wordCount: -1,
@@ -301,13 +345,16 @@ export const removeWord = async (lessonId, wordId) => {
 
 //Hàm lấy danh sách từ trong bài lesson
 export const getWord = async (lessonId) => {
+  const isObjectId = /^[0-9a-fA-F]{24}$/.test(lessonId);
   // kiểm tra tồn tại của lesson
-  const lessonExist = await VocabularyLesson.findById(lessonId);
+  const lessonExist = isObjectId
+    ? await VocabularyLesson.findById(lessonId)
+    : await VocabularyLesson.findOne({ slug: lessonId });
   if (!lessonExist) {
     throw new AppError("Lesson không tồn tại", 404);
   }
   //Lấy word
-  const words = await VocabularyLessonWord.find({ lessonId })
+  const words = await VocabularyLessonWord.find({ lessonId: lessonExist._id })
     .populate([
       {
         path: "wordId",
@@ -400,14 +447,17 @@ export const changeStatus = async (lessonId) => {
   const session = await mongoose.startSession();
   try {
     session.startTransaction();
-    const lesson = await VocabularyLesson.findById(lessonId).session(session);
+    const isObjectId = /^[0-9a-fA-F]{24}$/.test(lessonId);
+    const lesson = isObjectId
+      ? await VocabularyLesson.findById(lessonId).session(session)
+      : await VocabularyLesson.findOne({ slug: lessonId }).session(session);
     if (!lesson) {
       throw new AppError("Lesson không tồn tại", 404);
     }
     const newStatus = !lesson.isActive;
     //Cập nhật status lại
     await VocabularyLesson.findByIdAndUpdate(
-      lessonId,
+      lesson._id,
       { isActive: newStatus },
       { session },
     );
@@ -445,18 +495,26 @@ export const changeStatus = async (lessonId) => {
 };
 //Hàm lấy từ trong lesson để học
 export const getWordsForStudy = async (lessonId) => {
+  const isObjectId = /^[0-9a-fA-F]{24}$/.test(lessonId);
   //Kiểm tra lesson có tồn tại không
-  const lesson = await VocabularyLesson.findById(lessonId)
-    .populate({
-      path: "topicId",
-      select: "_id name",
-    })
-    .lean();
+  const lesson = isObjectId
+    ? await VocabularyLesson.findById(lessonId)
+        .populate({
+          path: "topicId",
+          select: "_id name",
+        })
+        .lean()
+    : await VocabularyLesson.findOne({ slug: lessonId })
+        .populate({
+          path: "topicId",
+          select: "_id name",
+        })
+        .lean();
   if (!lesson) {
     throw new AppError("Lesson không tồn tại", 404);
   }
   // Lấy word-meaning của từ
-  const lessonWords = await VocabularyLessonWord.find({ lessonId })
+  const lessonWords = await VocabularyLessonWord.find({ lessonId: lesson._id })
     .populate([
       {
         path: "wordId",

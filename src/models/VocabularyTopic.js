@@ -8,6 +8,14 @@ const vocabularyTopicSchema = new mongoose.Schema(
       trim: true,
     },
 
+    slug: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
+    },
+
     description: {
       type: String,
       default: "",
@@ -24,6 +32,12 @@ const vocabularyTopicSchema = new mongoose.Schema(
     },
 
     wordCount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
+    order: {
       type: Number,
       default: 0,
       min: 0,

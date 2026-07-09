@@ -8,10 +8,13 @@ import occupationRouter from "./routes/occupationRouter.js";
 import occupationCategoryRoute from "./routes/occupationCategoryRoute.js";
 import vocabularyTopicRoutes from "./routes/vocabularyTopicRoute.js";
 import vocabularyLessonRoutes from "./routes/vocabularyLessonRoute.js";
+import grammarDocumentRoutes from "./routes/grammarDocumentRoutes.js";
 import wordRoute from "./routes/wordRoute.js";
 import wordMeaningRoute from "./routes/wordMeaningRoute.js";
 import grammarTopicRoute from "./routes/grammarTopicRoute.js";
+import grammarLessonRoute from "./routes/grammarLessonRoute.js";
 import cors from "cors";
+import uploadRouter from "./routes/uploadRouter.js";
 import { authMiddleware } from "./middlewares/authMiddleware.js";
 import swaggerUi from "swagger-ui-express";
 import fs from "fs";
@@ -20,6 +23,9 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5001;
 app.set("trust proxy", 1);
+
+// Static files for uploads
+app.use("/uploads", express.static("uploads"));
 //middleware
 app.use(express.json());
 app.use(cookieParser());
@@ -42,6 +48,9 @@ app.use("/api/vocabulary-lessons", vocabularyLessonRoutes);
 app.use("/api/words", wordRoute);
 app.use("/api/word-meanings", wordMeaningRoute);
 app.use("/api/grammar-topics", grammarTopicRoute);
+app.use("/api/grammar-lessons", grammarLessonRoute);
+app.use("/api/grammar-documents", grammarDocumentRoutes);
+app.use("/api/upload", uploadRouter);
 connectDB().then(() => {
   app.listen(PORT, () => {
     console.log(`Server bắt đầu trên cổng ${PORT}`);

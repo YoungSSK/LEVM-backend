@@ -232,14 +232,18 @@ export const getMeaningById = async (meaningId) => {
 
   return meaning;
 };
-//Hàm lấy meaning theo word
+//Hàm lấy meaning theo word (hỗ trợ id hoặc slug)
 export const getMeaningByWord = async (wordId) => {
-  const word = await Word.findById(wordId);
+  const objectIdRegex = /^[0-9a-fA-F]{24}$/;
+  const isObjectId = objectIdRegex.test(wordId);
+  const word = isObjectId
+    ? await Word.findById(wordId)
+    : await Word.findOne({ slug: wordId });
   if (!word) {
     throw new AppError("Không tìm thấy từ", 404);
   }
 
-  const meanings = await WordMeaning.find({ wordId })
+  const meanings = await WordMeaning.find({ wordId: word._id })
     .sort({ isPrimary: -1, order: 1, createdAt: 1 })
     .lean();
 

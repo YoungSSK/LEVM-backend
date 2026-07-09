@@ -1,6 +1,8 @@
 import User from "../models/User.js";
 import AppError from "../utils/AppError.js";
 import bcrypt from "bcryptjs";
+import * as cloudinaryService from "./cloudinaryService.js";
+import fs from "fs";
 // lấy thông tin người dùng
 export const fetchMe = async (userId) => {
   const user = await User.findById(userId).select("-hashPassword");
@@ -56,4 +58,49 @@ export const changePassword = async (userId, data) => {
 
   user.hashPassword = hashPassword;
   await user.save();
+};
+
+// Cập nhật avatar
+export const updateAvatar = async (userId, filePath) => {
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new AppError("User không tồn tại", 404);
+  }
+
+  // Xóa avatar cũ trên Cloudinary nếu có
+  if (user.avatar?.publicId) {
+    try {
+      await cloudinaryService.deleteFile(user.avatar.publicId, "image");
+    } catch (error) {
+      console.error("Lỗi xóa avatar cũ:", error);
+    }
+  }
+
+  // Upload avatar mới lên Cloudinary
+  const uploadResult = await cloudinaryService.uploadImage(filePath, {
+    folder: "avatars",
+  });
+
+  // Cập nhật user với avatar mới
+  const updatedUser = await User.findByIdAndUpdate(
+    userId,
+    {
+      $set: {
+        avatar: {
+          publicId: uploadResult.publicId,
+          secureUrl: uploadResult.secureUrl,
+        },
+      },
+    },
+    { new: true, runValidators: true }
+  ).select("-hashPassword");
+
+  // Xóa file tạm trên local
+  try {
+    fs.unlinkSync(filePath);
+  } catch (error) {
+    console.error("Lỗi xóa file tạm:", error);
+  }
+
+  return updatedUser;
 };

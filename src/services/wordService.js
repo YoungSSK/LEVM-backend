@@ -7,6 +7,7 @@ import mongoose from "mongoose";
 import VocabularyLesson from "../models/VocabularyLesson.js";
 import VocabularyTopic from "../models/VocabularyTopic.js";
 import VocabularyLessonWord from "../models/VocabularyLessonWord.js";
+import slugify from "slugify";
 //Hàm tạo từ mới
 export const create = async (data) => {
   const { word, meaning, partOfSpeech, difficulty } = data;
@@ -15,6 +16,7 @@ export const create = async (data) => {
   if (existedWord) {
     throw new AppError("Từ vựng đã tồn tại", 409);
   }
+  const slug = slugify(word, { lower: true, strict: true, locale: "vi" });
   //Lấy pronunciation + audio + img
   const [apiInfo, imageInfo] = await Promise.all([
     getWordInfo(word),
@@ -23,6 +25,7 @@ export const create = async (data) => {
   //create
   const newWord = await Word.create({
     word,
+    slug,
     pronunciations: apiInfo.pronunciations,
     audioUrls: apiInfo.audioUrls,
     imageUrl: imageInfo?.imageUrl || "",
@@ -51,11 +54,17 @@ export const update = async (wordId, data) => {
     if (duplicate) {
       throw new AppError("Từ vựng đã tồn tại", 400);
     }
+    const slug = slugify(word, { lower: true, strict: true, locale: "vi" });
+    const duplicateSlug = await Word.findOne({ slug, _id: { $ne: wordId } });
+    if (duplicateSlug) {
+      throw new AppError("Slug đã tồn tại", 400);
+    }
     const [apiInfo, imageInfo] = await Promise.all([
       getWordInfo(word),
       getImageByWord(word),
     ]);
     updatedData.word = word;
+    updatedData.slug = slug;
     updatedData.pronunciations = apiInfo.pronunciations;
     updatedData.audioUrls = apiInfo.audioUrls;
     updatedData.imageUrl = imageInfo?.imageUrl || "";
@@ -152,6 +161,19 @@ export const getById = async (wordId) => {
   }
   return word;
 };
+//Hàm lấy thông tin từ theo slug
+export const getBySlug = async (slug) => {
+  const word = await Word.findOne({ slug }).populate({
+    path: "meanings",
+    options: {
+      sort: { isPrimary: -1, order: 1 },
+    },
+  });
+  if (!word) {
+    throw new AppError("Không tìm thấy từ vựng", 404);
+  }
+  return word;
+};
 //Hàm lấy chi tiết thông tin của từ
 export const getDetail = async (wordId) => {
   //Lấy thông tin cơ bản của word
@@ -168,6 +190,51 @@ export const getDetail = async (wordId) => {
     })
     .lean();
   // Lấy tất cả các lesson đang sử dụng word này
+  const lessonWords = await VocabularyLessonWord.find({ wordId })
+    .populate([
+      {
+        path: "lessonId",
+        select: "_id title topicId order isActive",
+        populate: {
+          path: "topicId",
+          select: "_id name",
+        },
+      },
+      {
+        path: "wordMeaningId",
+        select: "_id meaning partOfSpeech isPrimary order isActive",
+      },
+    ])
+    .lean();
+  return {
+    ...word,
+    meanings,
+    lessonUsage: lessonWords.map((item) => ({
+      lessonId: item.lessonId?._id,
+      lessonTitle: item.lessonId?.title,
+      topicId: item.lessonId?.topicId?._id,
+      topicName: item.lessonId?.topicId?.name,
+      wordMeaningId: item.wordMeaningId?._id,
+      meaning: item.wordMeaningId?.meaning,
+      partOfSpeech: item.wordMeaningId?.partOfSpeech,
+      isPrimary: item.wordMeaningId?.isPrimary,
+    })),
+    lessonCount: lessonWords.length,
+  };
+};
+//Hàm lấy chi tiết thông tin của từ theo slug
+export const getDetailBySlug = async (slug) => {
+  const word = await Word.findOne({ slug }).lean();
+  if (!word) {
+    throw new AppError("Không tìm thấy từ vựng", 404);
+  }
+  const wordId = word._id;
+  const meaning = await WordMeaning.find({ wordId, isActive: true })
+    .sort({
+      isPrimary: -1,
+      order: 1,
+    })
+    .lean();
   const lessonWords = await VocabularyLessonWord.find({ wordId })
     .populate([
       {
