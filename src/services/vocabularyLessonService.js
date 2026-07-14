@@ -358,6 +358,7 @@ export const getWord = async (lessonId) => {
     .populate([
       {
         path: "wordId",
+        select: "_id slug word pronunciations audioUrls imageUrl difficulty isActive",
       },
       {
         path: "wordMeaningId",

@@ -22,6 +22,7 @@ export const create = async (data) => {
     getWordInfo(word),
     getImageByWord(word),
   ]);
+
   //create
   const newWord = await Word.create({
     word,
@@ -42,11 +43,16 @@ export const create = async (data) => {
   return await Word.findById(newWord._id).populate("meanings");
 };
 //Hàm update thông tin từ
-export const update = async (wordId, data) => {
-  const currentWord = await Word.findById(wordId);
+export const update = async (wordIdOrSlug, data) => {
+  const objectIdRegex = /^[0-9a-fA-F]{24}$/;
+  const isObjectId = objectIdRegex.test(wordIdOrSlug);
+  const currentWord = isObjectId
+    ? await Word.findById(wordIdOrSlug)
+    : await Word.findOne({ slug: wordIdOrSlug });
   if (!currentWord) {
     throw new AppError("Không tìm thấy từ vựng", 404);
   }
+  const wordId = currentWord._id;
   const { word, difficulty } = data;
   const updatedData = {};
   if (word !== undefined) {
@@ -82,14 +88,19 @@ export const update = async (wordId, data) => {
   return await Word.findById(wordId).populate("meanings");
 };
 // Hàm xóa từ
-export const deleted = async (wordId) => {
+export const deleted = async (wordIdOrSlug) => {
   const session = await mongoose.startSession();
   try {
     session.startTransaction();
-    const word = await Word.findById(wordId).session(session);
+    const objectIdRegex = /^[0-9a-fA-F]{24}$/;
+    const isObjectId = objectIdRegex.test(wordIdOrSlug);
+    const word = isObjectId
+      ? await Word.findById(wordIdOrSlug).session(session)
+      : await Word.findOne({ slug: wordIdOrSlug }).session(session);
     if (!word) {
       throw new AppError("Không tìm thấy từ vựng", 404);
     }
+    const wordId = word._id;
     //Lấy tất cả lesson-word relation đang dùng từ này
     const lessonWords = await VocabularyLessonWord.find({ wordId })
       .select("lessonId")
@@ -183,7 +194,7 @@ export const getDetail = async (wordId) => {
     throw new AppError("Không tìm thấy từ vựng", 404);
   }
   // Lấy danh sách nghĩa của từ
-  const meaning = await WordMeaning.find({ wordId, isActive: true })
+  const meanings = await WordMeaning.find({ wordId, isActive: true })
     .sort({
       isPrimary: -1,
       order: 1,
@@ -229,7 +240,7 @@ export const getDetailBySlug = async (slug) => {
     throw new AppError("Không tìm thấy từ vựng", 404);
   }
   const wordId = word._id;
-  const meaning = await WordMeaning.find({ wordId, isActive: true })
+  const meanings = await WordMeaning.find({ wordId, isActive: true })
     .sort({
       isPrimary: -1,
       order: 1,
@@ -276,12 +287,11 @@ export const getAll = async (page = 1, limit = 10) => {
   //Lấy danh sách word đang active va dem so luong
   const [words, total] = await Promise.all([
     Word.find({ isActive: true })
-      .select(
-        "word pronunciations audioUrls imageUrl difficulty isActive createdAt updatedAt",
-      )
       .sort({ word: 1 })
       .skip(skip)
       .limit(currentLimit)
+      .select("slug word pronunciations audioUrls imageUrl difficulty ")
+
       .populate({
         path: "meanings",
         match: { isActive: true },
@@ -289,12 +299,26 @@ export const getAll = async (page = 1, limit = 10) => {
           sort: { isPrimary: -1, order: 1 },
         },
         select: "meaning partOfSpeech isPrimary order isActive",
-      }),
+      })
+      .lean(),
     Word.countDocuments({ isActive: true }),
   ]);
+  // Map fields to ensure slug is included
+  const mappedWords = words.map((word) => ({
+    _id: word._id,
+    word: word.word,
+    slug: word.slug,
+    pronunciations: word.pronunciations,
+    audioUrls: word.audioUrls,
+    imageUrl: word.imageUrl,
+    difficulty: word.difficulty,
+    isActive: word.isActive,
+    meanings: word.meanings,
+  }));
+  console.log("DEBUG mappedWords[0]:", mappedWords[0]); // 👈 thêm dòng này
   // return
   return {
-    words,
+    words: mappedWords,
     pagination: {
       total,
       page: currentPage,
@@ -322,7 +346,7 @@ export const search = async (keyword) => {
     ],
   })
     .select(
-      "word pronunciations audioUrls imageUrl difficulty isActive createdAt updatedAt",
+      "slug word pronunciations audioUrls imageUrl difficulty isActive createdAt updatedAt",
     )
     .sort({ word: 1 })
     .populate({

@@ -45,6 +45,11 @@ const userSchema = new mongoose.Schema(
       ref: "Occupation",
       default: null,
     },
+    occupationCategoryId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "OccupationCategory",
+      default: null,
+    },
     streak: {
       type: Number,
       default: 0,
