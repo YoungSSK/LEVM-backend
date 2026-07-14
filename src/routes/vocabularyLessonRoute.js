@@ -25,7 +25,7 @@ import {
 const router = express.Router();
 
 //public route
-// Chi tiết bài học
+// Chi tiết bài học (hỗ trợ cả id và slug)
 router.get(
   "/:id",
   validate(lessonIdParamsSchema, "params"),
@@ -38,12 +38,14 @@ router.get(
   validate(lessonWordParamsSchema, "params"),
   getLessonWords,
 );
+
 //Lấy danh từ trong lesson theo format study
 router.get(
   "/:lessonId/study-words",
   validate(lessonWordParamsSchema, "params"),
   getWordsForStudy,
 );
+
 //Admin route
 
 // Cập nhật bài học

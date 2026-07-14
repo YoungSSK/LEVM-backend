@@ -26,9 +26,14 @@ const userSchema = new mongoose.Schema(
       },
     },
     avatar: {
-      type: String,
-      default: "",
-      trim: true,
+      publicId: {
+        type: String,
+        default: null,
+      },
+      secureUrl: {
+        type: String,
+        default: null,
+      },
     },
     bio: {
       type: String,
@@ -38,6 +43,11 @@ const userSchema = new mongoose.Schema(
     occupationId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Occupation",
+      default: null,
+    },
+    occupationCategoryId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "OccupationCategory",
       default: null,
     },
     streak: {

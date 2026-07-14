@@ -2,6 +2,8 @@ import { z } from "zod";
 
 const objectIdRegex = /^[0-9a-fA-F]{24}$/;
 
+const slugRegex = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
 const trimString = (value) =>
   typeof value === "string" ? value.trim() : value;
 
@@ -15,7 +17,6 @@ const normalizeName = (value) => {
 
 const normalizeDescription = (value) => {
   if (value === null) return "";
-
   return typeof value === "string" ? value.trim().replace(/\s+/g, " ") : value;
 };
 
@@ -23,7 +24,19 @@ export const lessonIdParamsSchema = z
   .object({
     id: z.preprocess(
       trimString,
-      z.string().regex(objectIdRegex, "ID bài học không hợp lệ"),
+      z.string().refine(
+        (val) => objectIdRegex.test(val) || /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(val),
+        "ID hoặc slug bài học không hợp lệ",
+      ),
+    ),
+  })
+  .strict();
+
+export const lessonSlugParamsSchema = z
+  .object({
+    slug: z.preprocess(
+      trimString,
+      z.string().regex(slugRegex, "Slug không hợp lệ"),
     ),
   })
   .strict();
@@ -32,7 +45,10 @@ export const topicIdParamsSchema = z
   .object({
     topicId: z.preprocess(
       trimString,
-      z.string().regex(objectIdRegex, "ID chủ đề không hợp lệ"),
+      z.string().refine(
+        (val) => objectIdRegex.test(val) || /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(val),
+        "ID hoặc slug chủ đề không hợp lệ",
+      ),
     ),
   })
   .strict();
@@ -128,7 +144,10 @@ export const lessonWordParamsSchema = z
   .object({
     lessonId: z.preprocess(
       trimString,
-      z.string().regex(objectIdRegex, "Lesson không hợp lệ"),
+      z.string().refine(
+        (val) => objectIdRegex.test(val) || /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(val),
+        "ID hoặc slug bài học không hợp lệ",
+      ),
     ),
   })
   .strict();
@@ -136,7 +155,10 @@ export const lessonWordDeleteParamsSchema = z
   .object({
     lessonId: z.preprocess(
       trimString,
-      z.string().regex(objectIdRegex, "Lesson không hợp lệ"),
+      z.string().refine(
+        (val) => objectIdRegex.test(val) || /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(val),
+        "ID hoặc slug bài học không hợp lệ",
+      ),
     ),
 
     wordId: z.preprocess(

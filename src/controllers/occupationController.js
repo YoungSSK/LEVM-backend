@@ -1,5 +1,21 @@
 import * as occupationService from "../services/occupationService.js";
 
+// GET /api/occupations - Lấy tất cả occupations
+export const getAllOccupations = async (req, res) => {
+  try {
+    const occupations = await occupationService.getAll();
+    return res.status(200).json({
+      success: true,
+      data: occupations,
+    });
+  } catch (error) {
+    return res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || "Lỗi hệ thống",
+    });
+  }
+};
+
 export const getOccupationsByCategory = async (req, res) => {
   try {
     const occupations = await occupationService.getByCategoryId(

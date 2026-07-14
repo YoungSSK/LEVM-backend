@@ -33,18 +33,20 @@ const router = express.Router();
 // Lấy danh sách chủ đề
 router.get("/", getAllVocabularyTopic);
 
-// Lấy chi tiết một chủ đề
+// Lấy chi tiết một chủ đề (hỗ trợ cả id và slug)
 router.get(
   "/:id",
   validate(topicIdParamsSchema, "params"),
   getVocabularyTopicById,
 );
-// Lấy danh sách lesson theo topic
+
+// Lấy danh sách lesson theo topic (hỗ trợ id hoặc slug)
 router.get(
   "/:topicId/lessons",
   validate(lessonTopicIdParamsSchema, "params"),
   getVocabularyLessonByTopic,
 );
+
 // Tạo chủ đề mới
 router.post(
   "/",
@@ -78,13 +80,15 @@ router.delete(
   validate(topicIdParamsSchema, "params"),
   deletedVocabularyTopic,
 );
-// Lấy tổng trạng Lesson và wordCount active và inactive
+
+// Lấy thống kê topic
 router.get(
   "/:id/statistics",
   authorMiddleware("admin"),
   validate(topicIdParamsSchema, "params"),
   getTopicStatistics,
 );
+
 // Tạo lesson mới trong topic
 router.post(
   "/:topicId/lessons",
@@ -102,4 +106,5 @@ router.patch(
   validate(changeOrderSchema),
   changeLessonOrder,
 );
+
 export default router;

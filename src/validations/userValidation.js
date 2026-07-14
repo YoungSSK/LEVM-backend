@@ -57,15 +57,6 @@ export const updateUserSchema = z
         .optional(),
     ),
 
-    avatar: z.preprocess(
-      trimString,
-      z
-        .union([
-          z.string().url("Link avatar phải là một URL hợp lệ"),
-          z.literal(""),
-        ])
-        .optional(),
-    ),
     bio: z.preprocess(
       trimString,
       z.string().max(200, "Bio không quá 200 ký tự").optional(),
@@ -75,6 +66,17 @@ export const updateUserSchema = z
       z
         .union([
           z.string().regex(objectIdRegex, "occupationId không hợp lệ"),
+          z.null(),
+        ])
+        .optional(),
+    ),
+    occupationCategoryId: z.preprocess(
+      normalizeOccupationId,
+      z
+        .union([
+          z
+            .string()
+            .regex(objectIdRegex, "occupationCategoryId không hợp lệ"),
           z.null(),
         ])
         .optional(),

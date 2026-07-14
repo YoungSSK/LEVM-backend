@@ -18,14 +18,19 @@ export const createMeaning = async (data) => {
       isPrimary = false,
       order,
     } = data;
-    // Kiểm tra từ vựng tồn tại
-    const word = await Word.findById(wordId).session(session);
+    // Kiểm tra từ vựng tồn tại (hỗ trợ cả id và slug)
+    const objectIdRegex = /^[0-9a-fA-F]{24}$/;
+    const isObjectId = objectIdRegex.test(wordId);
+    const word = isObjectId 
+      ? await Word.findById(wordId).session(session)
+      : await Word.findOne({ slug: wordId }).session(session);
     if (!word) {
       throw new AppError("Không tìm thấy từ vựng", 404);
     }
+    const actualWordId = word._id;
     // Kiểm tra nghĩa trùng lặp
     const duplicate = await WordMeaning.findOne({
-      wordId,
+      wordId: actualWordId,
       partOfSpeech,
       meaning,
     }).session(session);
@@ -33,7 +38,7 @@ export const createMeaning = async (data) => {
       throw new AppError("Nghĩa này đã tồn tại", 409);
     }
     // Xác định thứ tự hiển thị và nghĩa chính
-    const lastMeaning = await WordMeaning.findOne({ wordId })
+    const lastMeaning = await WordMeaning.findOne({ wordId: actualWordId })
       .sort({
         order: -1,
       })
@@ -42,7 +47,7 @@ export const createMeaning = async (data) => {
     const shouldBePrimary = isPrimary || !lastMeaning;
     if (shouldBePrimary) {
       await WordMeaning.updateMany(
-        { wordId },
+        { wordId: actualWordId },
         { isPrimary: false },
         { session },
       );
@@ -51,7 +56,7 @@ export const createMeaning = async (data) => {
     const [newMeaning] = await WordMeaning.create(
       [
         {
-          wordId,
+          wordId: actualWordId,
           partOfSpeech,
           meaning,
           exampleSentence,
@@ -232,14 +237,18 @@ export const getMeaningById = async (meaningId) => {
 
   return meaning;
 };
-//Hàm lấy meaning theo word
+//Hàm lấy meaning theo word (hỗ trợ id hoặc slug)
 export const getMeaningByWord = async (wordId) => {
-  const word = await Word.findById(wordId);
+  const objectIdRegex = /^[0-9a-fA-F]{24}$/;
+  const isObjectId = objectIdRegex.test(wordId);
+  const word = isObjectId
+    ? await Word.findById(wordId)
+    : await Word.findOne({ slug: wordId });
   if (!word) {
     throw new AppError("Không tìm thấy từ", 404);
   }
 
-  const meanings = await WordMeaning.find({ wordId })
+  const meanings = await WordMeaning.find({ wordId: word._id })
     .sort({ isPrimary: -1, order: 1, createdAt: 1 })
     .lean();
 
@@ -250,15 +259,20 @@ export const setPrimary = async (wordId, meaningId) => {
   const session = await mongoose.startSession();
   try {
     session.startTransaction();
-    const word = await Word.findById(wordId).session(session);
+    const objectIdRegex = /^[0-9a-fA-F]{24}$/;
+    const isObjectId = objectIdRegex.test(wordId);
+    const word = isObjectId
+      ? await Word.findById(wordId).session(session)
+      : await Word.findOne({ slug: wordId }).session(session);
     if (!word) {
       throw new AppError("Không tìm thấy từ vựng", 404);
     }
+    const actualWordId = word._id;
     const meaning = await WordMeaning.findById(meaningId).session(session);
     if (!meaning) {
       throw new AppError("không tìm thấy nghĩa", 404);
     }
-    if (String(meaning.wordId) !== String(wordId)) {
+    if (String(meaning.wordId) !== String(actualWordId)) {
       throw new AppError("Nghĩa không thuộc từ đã chọn", 400);
     }
     if (!meaning.isActive) {
@@ -267,7 +281,7 @@ export const setPrimary = async (wordId, meaningId) => {
         400,
       );
     }
-    await WordMeaning.updateMany({ wordId }, { isPrimary: false }, { session });
+    await WordMeaning.updateMany({ wordId: actualWordId }, { isPrimary: false }, { session });
     await WordMeaning.findByIdAndUpdate(
       meaningId,
       { isPrimary: true },

@@ -2,6 +2,11 @@ import Occupation from "../models/Occupation.js";
 import OccupationCategory from "../models/OccupationCategory.js";
 import AppError from "../utils/AppError.js";
 
+// Hàm lấy tất cả occupations
+export const getAll = async () => {
+  return await Occupation.find({ isActive: true }).sort({ name: 1 });
+};
+
 // Hàm lấy danh sách nghề nghiệp
 export const getByCategoryId = async (categoryId) => {
   const catagory = await OccupationCategory.findById(categoryId);
@@ -15,12 +20,12 @@ export const getByCategoryId = async (categoryId) => {
 };
 //Hàm tạo occupation
 export const create = async (data) => {
-  const { catagoryId, name, description } = data;
-  const catagory = await OccupationCategory.findById(catagoryId);
+  const { categoryId, name, description } = data;
+  const catagory = await OccupationCategory.findById(categoryId);
   if (!catagory) {
     throw new AppError("Nhóm ngành nghề không tồn tại", 404);
   }
-  const duplicateOccupation = await Occupation.findOne({ catagoryId, name });
+  const duplicateOccupation = await Occupation.findOne({ categoryId, name });
   if (duplicateOccupation) {
     throw new AppError("Ngành nghề đã tồn tại trong nhóm ngành", 400);
   }
