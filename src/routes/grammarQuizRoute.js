@@ -1,5 +1,6 @@
 import express from "express";
 import authorMiddleware from "../middlewares/authorMiddleware.js";
+import { authMiddleware } from "../middlewares/authMiddleware.js";
 import { validate } from "../middlewares/validateMiddleware.js";
 import uploadQuizCsv from "../middlewares/uploadQuizCsv.js";
 
@@ -9,10 +10,13 @@ import {
   createGrammarQuizQuestionSchema,
   updateGrammarQuizQuestionSchema,
   reorderQuizSchema,
+  submitQuizSchema,
 } from "../validations/grammarQuizValidation.js";
 
 import {
   listQuizQuestions,
+  getQuizQuestionsForPlay,
+  submitGrammarQuiz,
   createQuizQuestion,
   updateQuizQuestion,
   deleteQuizQuestion,
@@ -24,18 +28,36 @@ import {
 const router = express.Router();
 
 /**
- * Tất cả route admin (theo prompt 2.3 — CRUD + CSV import).
- * Nếu sau này cần cho user xem quiz, sẽ tách router riêng.
- *
- * Lưu ý: route /csv-template đặt TRƯỚC /:lessonId/quiz để không bị
- * Express match nhầm 'csv-template' làm :lessonId.
+ * Route cho user thường (không phải admin) - đặt TRƯỚC admin middleware.
+ * Lưu ý: phải đặt TRƯỚC router.use(authorMiddleware) để không bị admin guard chặn.
+ */
+
+// Lấy câu hỏi quiz để user làm bài (KHÔNG kèm isCorrect và explanation)
+router.get(
+  "/lessons/:lessonId/quiz-play",
+  authMiddleware,
+  validate(lessonIdParamsQuizSchema, "params"),
+  getQuizQuestionsForPlay,
+);
+
+// Nộp bài quiz (user thường)
+router.post(
+  "/lessons/:lessonId/quiz/submit",
+  authMiddleware,
+  validate(lessonIdParamsQuizSchema, "params"),
+  validate(submitQuizSchema),
+  submitGrammarQuiz,
+);
+
+/**
+ * Tất cả route admin (CRUD + CSV import) - đặt SAU admin middleware.
  */
 router.use(authorMiddleware("admin"));
 
 // Tải file mẫu CSV
 router.get("/quiz/csv-template", downloadCsvTemplate);
 
-// Lấy / tạo danh sách câu hỏi theo lesson
+// Lấy / tạo danh sách câu hỏi theo lesson (admin)
 router.get(
   "/lessons/:lessonId/quiz",
   validate(lessonIdParamsQuizSchema, "params"),

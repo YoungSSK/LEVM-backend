@@ -18,6 +18,37 @@ export const listQuizQuestions = async (req, res) => {
   }
 };
 
+/**
+ * Lấy câu hỏi quiz để user làm bài (KHÔNG kèm isCorrect và explanation).
+ * Dùng cho mobile app — chỉ cần authMiddleware thường.
+ */
+export const getQuizQuestionsForPlay = async (req, res) => {
+  try {
+    console.log("[getQuizQuestionsForPlay] req.user:", req.user?._id);
+    console.log("[getQuizQuestionsForPlay] params:", req.params);
+
+    if (!req.user) {
+      console.log("[getQuizQuestionsForPlay] No user - returning 401");
+      return res.status(401).json({
+        success: false,
+        message: "Cần đăng nhập để làm bài",
+      });
+    }
+    const data = await grammarQuizService.listQuizQuestionsByLesson(
+      req.params.lessonId,
+      { includeAnswers: false }, // ẩn isCorrect và explanation
+    );
+    console.log("[getQuizQuestionsForPlay] Success, questions count:", data.length);
+    return res.status(200).json({ success: true, data });
+  } catch (error) {
+    console.error("[getQuizQuestionsForPlay] Error:", error);
+    return res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || "Lỗi hệ thống",
+    });
+  }
+};
+
 // (Xem các export khác dưới đây — không thay đổi)
 
 // POST /grammar-lessons/:lessonId/quiz
@@ -183,3 +214,6 @@ export const submitQuizAttempt = async (req, res) => {
     });
   }
 };
+
+// Alias cho route
+export const submitGrammarQuiz = submitQuizAttempt;
