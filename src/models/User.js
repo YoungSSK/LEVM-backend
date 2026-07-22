@@ -59,6 +59,22 @@ const userSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    timezone: {
+      type: String,
+      default: "Asia/Ho_Chi_Minh",
+    },
+    lastActivityDate: {
+      type: Date,
+      default: null,
+    },
+    longestStreak: {
+      type: Number,
+      default: 0,
+    },
+    freezeCount: {
+      type: Number,
+      default: 0,
+    },
     role: {
       type: String,
       enum: ["user", "admin"],

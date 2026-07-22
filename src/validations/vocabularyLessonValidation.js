@@ -87,6 +87,22 @@ export const createLessonSchema = z
       .min(0, "Thời gian không được âm")
       .optional()
       .default(0),
+
+    xpReward: z
+      .preprocess(
+        (val) => (val === "" || val === undefined ? undefined : Number(val)),
+        z
+          .number({
+            invalid_type_error: "XP thưởng phải là số",
+          })
+          .int("XP thưởng phải là số nguyên")
+          .min(0, "XP thưởng không được âm")
+          .max(1000, "XP thưởng tối đa 1000")
+          .optional()
+          .default(10),
+      )
+      .optional()
+      .default(10),
   })
   .strict();
 
@@ -117,6 +133,20 @@ export const updateLessonSchema = z
       .default(0),
 
     isActive: z.boolean().optional(),
+
+    xpReward: z
+      .preprocess(
+        (val) => (val === "" || val === undefined ? undefined : Number(val)),
+        z
+          .number({
+            invalid_type_error: "XP thưởng phải là số",
+          })
+          .int("XP thưởng phải là số nguyên")
+          .min(0, "XP thưởng không được âm")
+          .max(1000, "XP thưởng tối đa 1000")
+          .optional(),
+      )
+      .optional(),
   })
   .strict()
   .refine((data) => Object.keys(data).length > 0, {

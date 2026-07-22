@@ -78,15 +78,51 @@ const grammarLessonSchema = new mongoose.Schema(
       default: true,
     },
 
-    // Loại bài học: 'theory' = lý thuyết, 'exercise' = bài tập
+    // ===== Gamification (Bước 1 refactor) =====
+    // Số XP cộng cho user khi pass quiz lần đầu. Admin chỉnh được qua GrammarLessonFormDialog.
+    xpReward: {
+      type: Number,
+      default: 10,
+      min: 0,
+    },
+
+    // Ngưỡng % đúng tối thiểu để tính "đạt"; Admin chỉnh được. Mặc định 70.
+    passThreshold: {
+      type: Number,
+      default: 70,
+      min: 0,
+      max: 100,
+    },
+
+    // Cờ cho FE biết lesson này đã có câu hỏi quiz hay chưa (>=1 câu active).
+    // Tự động set true khi tạo câu hỏi đầu tiên; không cần FE nhập tay.
+    hasQuiz: {
+      type: Boolean,
+      default: false,
+    },
+
+    // Audit cho autosave + khoá tránh ghi đè (Bước 2 sẽ dùng).
+    contentUpdatedAt: {
+      type: Date,
+      default: null,
+    },
+    contentUpdatedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+
+    // ===== DEPRECATED =====
+    // @deprecated Kể từ refactor Grammar: 1 lesson = Theory + Quiz. Sẽ xoá ở release sau.
+    // Logic quiz mới dùng model GrammarQuizQuestion (lessonId ref tới đây).
+    // Field giữ lại để migration xử lý dữ liệu cũ & không vỡ các nơi đang đọc.
     lessonType: {
       type: String,
       enum: ["theory", "exercise"],
       default: "theory",
     },
 
-    // Bài học cha — chỉ có khi lessonType = 'exercise'
-    // Trỏ đến _id của GrammarLesson có lessonType = 'theory'
+    // @deprecated Trỏ tới GrammarLesson cha (khi lessonType='exercise' cũ). Giữ tạm để migration.
     parentLessonId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "GrammarLesson",

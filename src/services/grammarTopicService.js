@@ -3,6 +3,8 @@ import GrammarLesson from "../models/GrammarLesson.js";
 import UserGrammarProgress from "../models/UserGrammarProgress.js";
 import AppError from "../utils/AppError.js";
 import slugify from "slugify";
+
+const objectIdRegex = /^[0-9a-fA-F]{24}$/;
 // TẠO CHỦ ĐỀ NGỮ PHÁP MỚI
 export const createGrammarTopic = async (data) => {
   const { name, description, order, lessonCount, isActive } = data;
@@ -84,16 +86,20 @@ export const deleteGrammarTopic = async (topicId) => {
   return topic;
 };
 
-// LẤY CHI TIẾT CHỦ ĐỀ NGỮ PHÁP THEO ID
-export const getGrammarTopicById = async (topicId) => {
-  const topic = await GrammarTopic.findById(topicId).lean();
+// LẤY CHI TIẾT CHỦ ĐỀ NGỮ PHÁP THEO ID HOẶC SLUG
+// Accept cả ObjectId lẫn slug (grammarTopicIdParamsSchema đã được update để accept cả hai).
+export const getGrammarTopicById = async (topicIdOrSlug) => {
+  let topic;
+  if (objectIdRegex.test(topicIdOrSlug)) {
+    topic = await GrammarTopic.findById(topicIdOrSlug).lean();
+  } else {
+    topic = await GrammarTopic.findOne({ slug: topicIdOrSlug }).lean();
+  }
   if (!topic) {
     throw new AppError("Chủ đề không tồn tại", 404);
   }
-  const lessons = await GrammarLesson.find({ topicId, isActive: true })
-    .sort({
-      order: 1,
-    })
+  const lessons = await GrammarLesson.find({ topicId: topic._id, isActive: true })
+    .sort({ order: 1 })
     .lean();
   return { ...topic, lessons };
 };

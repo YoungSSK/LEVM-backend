@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 const objectIdRegex = /^[0-9a-fA-F]{24}$/;
+const slugRegex = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 const trimString = (value) =>
   typeof value === "string" ? value.trim() : value;
@@ -17,11 +18,18 @@ const normalizeDescription = (value) => {
   return typeof value === "string" ? value.trim().replace(/\s+/g, " ") : value;
 };
 
+/**
+ * Accept cả ObjectId lẫn slug — giống topicIdParamsSchema trong vocabulary.
+ * Lỗi "ID chủ đề ngữ pháp không hợp lệ" xảy ra khi slug bị gửi vào schema này.
+ */
 export const grammarTopicIdParamsSchema = z
   .object({
     id: z.preprocess(
       trimString,
-      z.string().regex(objectIdRegex, "ID chủ đề ngữ pháp không hợp lệ"),
+      z.string().refine(
+        (val) => objectIdRegex.test(val) || slugRegex.test(val),
+        "ID chủ đề ngữ pháp không hợp lệ",
+      ),
     ),
   })
   .strict();
