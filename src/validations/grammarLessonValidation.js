@@ -121,22 +121,35 @@ export const createGrammarLessonSchema = z
       .optional()
       .default(true),
 
-    lessonType: z
-      .enum(["theory", "exercise"], {
-        invalid_type_error: "Loại bài học không hợp lệ",
+    xpReward: z
+      .number({
+        invalid_type_error: "XP thưởng phải là số",
       })
+      .int("XP thưởng phải là số nguyên")
+      .min(0, "XP thưởng không được nhỏ hơn 0")
+      .max(1000, "XP thưởng không được vượt quá 1000")
       .optional()
-      .default("theory"),
+      .default(10),
 
-    parentLessonId: z.preprocess(
+    passThreshold: z
+      .number({
+        invalid_type_error: "Ngưỡng đạt phải là số",
+      })
+      .int("Ngưỡng đạt phải là số nguyên")
+      .min(0, "Ngưỡng đạt không được nhỏ hơn 0")
+      .max(100, "Ngưỡng đạt không được vượt quá 100")
+      .optional()
+      .default(70),
+
+    htmlContent: z.preprocess(
       trimString,
       z
-        .string()
-        .regex(objectIdRegex, "ID bài học cha không hợp lệ")
-        .or(z.literal(""))
+        .string({
+          required_error: "Nội dung bài học dạng HTML là bắt buộc",
+        })
+        .min(1, "Nội dung HTML không được để trống")
         .optional()
-        .nullable()
-        .transform((v) => (v === "" || v === null ? null : v)),
+        .default("<p></p>"),
     ),
   })
   .strict();
@@ -205,6 +218,24 @@ export const updateGrammarLessonSchema = z
       })
       .optional(),
 
+    xpReward: z
+      .number({
+        invalid_type_error: "XP thưởng phải là số",
+      })
+      .int("XP thưởng phải là số nguyên")
+      .min(0, "XP thưởng không được nhỏ hơn 0")
+      .max(1000, "XP thưởng không được vượt quá 1000")
+      .optional(),
+
+    passThreshold: z
+      .number({
+        invalid_type_error: "Ngưỡng đạt phải là số",
+      })
+      .int("Ngưỡng đạt phải là số nguyên")
+      .min(0, "Ngưỡng đạt không được nhỏ hơn 0")
+      .max(100, "Ngưỡng đạt không được vượt quá 100")
+      .optional(),
+
     lessonType: z
       .enum(["theory", "exercise"], {
         invalid_type_error: "Loại bài học không hợp lệ",
@@ -236,6 +267,40 @@ export const changeLessonOrderSchema = z
       })
       .int("Thứ tự hiển thị phải là số nguyên")
       .min(0, "Thứ tự hiển thị không được nhỏ hơn 0"),
+  })
+  .strict();
+
+/**
+ * Body của PUT /grammar-lessons/:id/content — autosave editor lý thuyết.
+ * Tách riêng khỏi updateGrammarLessonSchema để:
+ *  - Không xung đột với validation metadata (title, isPublished, ...).
+ *  - Cho phép debounce gọi nhiều lần mà không tốn validate field không liên quan.
+ *  - lastKnownContentUpdatedAt (optional) dùng cho optimistic locking ở FE.
+ */
+export const updateGrammarLessonContentSchema = z
+  .object({
+    htmlContent: z.preprocess(
+      trimString,
+      z
+        .string({
+          required_error: "Nội dung HTML là bắt buộc",
+        })
+        .min(1, "Nội dung HTML không được để trống"),
+    ),
+    plainTextContent: z.preprocess(
+      trimString,
+      z.string().optional().default(""),
+    ),
+    lastKnownContentUpdatedAt: z
+      .preprocess(
+        (v) => (v === "" || v === null || v === undefined ? undefined : v),
+        z
+          .string()
+          .datetime({ offset: true })
+          .or(z.string().datetime())
+          .optional(),
+      )
+      .optional(),
   })
   .strict();
 
@@ -365,3 +430,87 @@ export const createGrammarLessonFromDocumentSchema = z
   })
   .strict();
 
+export const updateGrammarLessonFromDocumentSchema = z
+  .object({
+    title: z.preprocess(
+      normalizeName,
+      z
+        .string()
+        .min(1, "Tiêu đề bài học không được để trống")
+        .max(200, "Tiêu đề bài học không được vượt quá 200 ký tự")
+        .optional(),
+    ),
+
+    shortDescription: z.preprocess(
+      normalizeDescription,
+      z
+        .string()
+        .max(500, "Mô tả ngắn không được vượt quá 500 ký tự")
+        .optional(),
+    ),
+
+    thumbnailUrl: z.preprocess(
+      trimString,
+      z
+        .string()
+        .url("Thumbnail URL không hợp lệ")
+        .or(z.literal(""))
+        .optional(),
+    ),
+
+    estimatedTime: z.preprocess(
+      (val) => (val !== undefined && val !== "" ? Number(val) : undefined),
+      z
+        .number({
+          invalid_type_error: "Thời gian ước tính phải là số",
+        })
+        .int("Thời gian ước tính phải là số nguyên phút")
+        .min(0, "Thời gian ước tính không được nhỏ hơn 0")
+        .optional(),
+    ),
+
+    isPublished: z.preprocess(
+      (val) => {
+        if (val === "true" || val === true) return true;
+        if (val === "false" || val === false) return false;
+        return undefined;
+      },
+      z
+        .boolean({
+          invalid_type_error: "Trạng thái xuất bản phải là boolean",
+        })
+        .optional(),
+    ),
+
+    isActive: z.preprocess(
+      (val) => {
+        if (val === "true" || val === true) return true;
+        if (val === "false" || val === false) return false;
+        return undefined;
+      },
+      z
+        .boolean({
+          invalid_type_error: "Trạng thái hoạt động phải là boolean",
+        })
+        .optional(),
+    ),
+
+    xpReward: z
+      .number({
+        invalid_type_error: "XP thưởng phải là số",
+      })
+      .int("XP thưởng phải là số nguyên")
+      .min(0, "XP thưởng không được nhỏ hơn 0")
+      .max(1000, "XP thưởng không được vượt quá 1000")
+      .optional(),
+
+    passThreshold: z
+      .number({
+        invalid_type_error: "Ngưỡng đạt phải là số",
+      })
+      .int("Ngưỡng đạt phải là số nguyên")
+      .min(0, "Ngưỡng đạt không được nhỏ hơn 0")
+      .max(100, "Ngưỡng đạt không được vượt quá 100")
+      .optional(),
+  })
+  .strict();

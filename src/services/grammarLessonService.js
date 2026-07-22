@@ -5,6 +5,97 @@ import { updateLessonCount } from "../services/grammarTopicService.js";
 import AppError from "../utils/AppError.js";
 import slugify from "slugify";
 
+/**
+ * Strip HTML → plain text. Dùng khi autosave để cập nhật lại plainTextContent.
+ */
+const stripHtmlToPlain = (html) => {
+  if (!html || typeof html !== "string") return "";
+  return html.replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim();
+};
+
+/**
+ * Sanitize HTML trước khi lưu xuống DB.
+ * Mục tiêu: ngăn XSS bằng cách loại bỏ:
+ *  - <script>, <iframe>, <object>, <embed>, <form>, <input>, <button>
+ *  - attribute javascript:, data: (trừ data:image/png;base64 cho ảnh embed)
+ *  - on* event handlers (onclick, onerror, onload, v.v.)
+ *  - expression() (IE CSS)
+ * Giữ nguyên các tag TipTap hợp lệ: p, h1-h6, ul, ol, li, blockquote,
+ *  strong, em, s, u, hr, br, code, pre, span (không có event).
+ */
+const DANGEROUS_TAGS = [
+  "script", "iframe", "object", "embed", "form", "input", "button",
+  "select", "textarea", "style", "link", "meta", "base", "svg", "math",
+];
+
+const DANGEROUS_ATTR_PREFIXES = [
+  "on",            // onload, onclick, onerror, v.v.
+  "javascript:",
+  "data:",         // data:application, data:javascript, v.v.
+];
+
+const ALLOWED_TAGS = new Set([
+  "p", "br", "hr",
+  "h1", "h2", "h3", "h4", "h5", "h6",
+  "ul", "ol", "li",
+  "strong", "b", "em", "i", "s", "u", "mark", "code", "pre",
+  "blockquote",
+  "span", "div",
+  "a",            // href được kiểm tra riêng
+  "img",          // src được kiểm tra riêng
+  "table", "thead", "tbody", "tr", "th", "td",
+]);
+
+const sanitizeHtml = (html) => {
+  if (!html || typeof html !== "string") return "";
+
+  let result = html;
+
+  // 1. Loại bỏ toàn bộ tag nguy hiểm (cùng nội dung bên trong).
+  for (const tag of DANGEROUS_TAGS) {
+    result = result.replace(
+      new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, "gi"),
+      "",
+    );
+    result = result.replace(
+      new RegExp(`<${tag}[^>]*/?>`, "gi"),
+      "",
+    );
+  }
+
+  // 2. Loại bỏ comment HTML (có thể chứa IE conditional comments).
+  result = result.replace(/<!--[\s\S]*?-->/g, "");
+
+  // 3. Loại bỏ attribute nguy hiểm (on* event handlers, javascript:, data: URI không an toàn).
+  result = result.replace(
+    /\s+(on\w+|javascript:|data:(?!image\/(png|jpeg|gif|webp);base64))(\s*=\s*["'][^"']*["'])?/gi,
+    "",
+  );
+
+  // 4. Loại bỏ expression() trong CSS (IE).
+  result = result.replace(/expression\s*\([^)]*\)/gi, "");
+
+  // 5. Chuẩn hóa href/src — chỉ cho phép http, https, mailto, / (relative).
+  result = result.replace(
+    /\s+(href|src)\s*=\s*["']([^"']*)["']/gi,
+    (match, attr, value) => {
+      const trimmed = value.trim();
+      if (
+        trimmed.startsWith("http://") ||
+        trimmed.startsWith("https://") ||
+        trimmed.startsWith("mailto:") ||
+        trimmed.startsWith("/") ||
+        trimmed === "#"
+      ) {
+        return ` ${attr}="${trimmed}"`;
+      }
+      return ""; // loại bỏ nếu không hợp lệ
+    },
+  );
+
+  return result.trim();
+};
+
 // Hàm sinh slug duy nhất
 const generateUniqueSlug = async (title) => {
   const baseSlug = slugify(title, {
@@ -519,7 +610,7 @@ export const getActiveLessonsByTopic = async (topicId) => {
       order: 1,
       title: 1,
     })
-    .select("_id title slug shortDescription thumbnailUrl estimatedTime order lessonType parentLessonId")
+    .select("_id title slug shortDescription thumbnailUrl estimatedTime order lessonType parentLessonId xpReward passThreshold hasQuiz contentUpdatedAt")
     .lean();
 
   return {
@@ -572,5 +663,63 @@ export const getPreviousLesson = async (lessonId) => {
   return {
     hasPreviousLesson: !!previousLesson,
     previousLesson,
+  };
+};
+
+/**
+ * CẬP NHẬT NỘI DUNG LÝ THUYẾT (autosave)
+ * Body: { htmlContent, plainTextContent?, lastKnownContentUpdatedAt? }
+ * - Cập nhật htmlContent + plainTextContent (strip HTML tự động nếu FE không gửi).
+ * - Set contentUpdatedAt = now(), contentUpdatedBy = req.user._id.
+ * - Optimistic locking: nếu FE gửi lastKnownContentUpdatedAt mà không khớp với
+ *   contentUpdatedAt hiện tại trong DB -> trả về AppError 409.
+ *   (Trường hợp lastKnownContentUpdatedAt = null tức là lesson chưa bao giờ
+ *    được autosave trước đó; chỉ khoá khi DB cũng có timestamp.)
+ */
+export const updateGrammarLessonContent = async (
+  lessonId,
+  data,
+  updatedByUserId,
+) => {
+  const lesson = await GrammarLesson.findById(lessonId);
+  if (!lesson) {
+    throw new AppError("Bài học không tồn tại", 404);
+  }
+
+  // Optimistic locking nhẹ (Bước 2 — không làm real-time collab).
+  if (
+    data.lastKnownContentUpdatedAt &&
+    lesson.contentUpdatedAt
+  ) {
+    const clientTs = new Date(data.lastKnownContentUpdatedAt).getTime();
+    const serverTs = new Date(lesson.contentUpdatedAt).getTime();
+    if (!Number.isNaN(clientTs) && !Number.isNaN(serverTs) && clientTs !== serverTs) {
+      throw new AppError(
+        "Nội dung đã được cập nhật bởi người khác. Vui lòng tải lại trước khi lưu.",
+        409,
+      );
+    }
+  }
+
+  const plain =
+    data.plainTextContent !== undefined && data.plainTextContent !== ""
+      ? data.plainTextContent
+      : stripHtmlToPlain(data.htmlContent);
+
+  // Sanitize htmlContent trước khi lưu (ngăn XSS).
+  const safeHtml = sanitizeHtml(data.htmlContent);
+
+  lesson.htmlContent = safeHtml;
+  lesson.plainTextContent = plain;
+  lesson.contentUpdatedAt = new Date();
+  lesson.contentUpdatedBy = updatedByUserId || null;
+
+  await lesson.save();
+
+  return {
+    _id: lesson._id,
+    contentUpdatedAt: lesson.contentUpdatedAt,
+    contentUpdatedBy: lesson.contentUpdatedBy,
+    plainTextContent: lesson.plainTextContent,
   };
 };

@@ -48,6 +48,13 @@ const vocabularyLessonSchema = new mongoose.Schema(
       min: 0,
     },
 
+    // XP cộng khi user hoàn thành lesson (Admin chỉnh được).
+    xpReward: {
+      type: Number,
+      default: 10,
+      min: 0,
+    },
+
     isActive: {
       type: Boolean,
       default: true,

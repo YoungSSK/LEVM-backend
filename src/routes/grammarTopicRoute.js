@@ -39,15 +39,16 @@ router.get("/active", getActiveGrammarTopics);
 // Lấy danh sách tất cả chủ đề ngữ pháp (phân trang, lọc, sắp xếp)
 router.get("/", getAllGrammarTopics);
 
+// Lấy chi tiết chủ đề theo Slug
+// Đặt TRƯỚC /:id để tránh slug bị nhận dạng sai thành topic ID
+router.get("/slug/:slug", getGrammarTopicBySlug);
+
 // Lấy chi tiết chủ đề theo ID
 router.get(
   "/:id",
   validate(grammarTopicIdParamsSchema, "params"),
   getGrammarTopicById,
 );
-
-// Lấy chi tiết chủ đề theo slug
-router.get("/slug/:slug", getGrammarTopicBySlug);
 
 // --- Admin Routes ---
 router.use(authorMiddleware("admin"));

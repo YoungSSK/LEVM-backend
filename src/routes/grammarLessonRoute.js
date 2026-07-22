@@ -2,6 +2,8 @@ import express from "express";
 import {
   createGrammarLesson,
   updateGrammarLesson,
+  updateGrammarLessonContent,
+  updateGrammarLessonFromDocument,
   deleteGrammarLesson,
   getGrammarLessonById,
   getGrammarLessonBySlug,
@@ -27,10 +29,12 @@ import {
   topicIdParamsSchema,
   createGrammarLessonSchema,
   updateGrammarLessonSchema,
+  updateGrammarLessonContentSchema,
   changeLessonOrderSchema,
   changePublishStatusSchema,
   changeLessonStatusSchema,
   createGrammarLessonFromDocumentSchema,
+  updateGrammarLessonFromDocumentSchema,
 } from "../validations/grammarLessonValidation.js";
 
 const router = express.Router();
@@ -57,11 +61,20 @@ router.get(
   getActiveLessonsByTopic,
 );
 
+// Lấy danh sách tất cả bài học ngữ pháp (phân trang, lọc, sắp xếp)
+// Đặt TRƯỚC /:id để tránh slug "all" bị nhận dạng sai thành lesson ID
+router.get("/", getAllGrammarLessons);
+
 // Lấy chi tiết bài học ngữ pháp theo Slug
+// Đặt TRƯỚC /:id để tránh slug bị nhận dạng sai thành lesson ID
 router.get("/slug/:slug", getGrammarLessonBySlug);
 
-// Lấy danh sách tất cả bài học ngữ pháp (phân trang, lọc, sắp xếp)
-router.get("/", getAllGrammarLessons);
+// Lấy chi tiết bài học ngữ pháp theo ID
+router.get(
+  "/:id",
+  validate(grammarLessonIdParamsSchema, "params"),
+  getGrammarLessonById,
+);
 
 // Lấy bài học kế tiếp trong cùng chủ đề
 router.get(
@@ -75,13 +88,6 @@ router.get(
   "/:id/previous",
   validate(grammarLessonIdParamsSchema, "params"),
   getPreviousLesson,
-);
-
-// Lấy chi tiết bài học ngữ pháp theo ID
-router.get(
-  "/:id",
-  validate(grammarLessonIdParamsSchema, "params"),
-  getGrammarLessonById,
 );
 
 // --- Admin Routes ---
@@ -104,6 +110,23 @@ router.patch(
   validate(grammarLessonIdParamsSchema, "params"),
   validate(updateGrammarLessonSchema),
   updateGrammarLesson,
+);
+
+// Autosave nội dung lý thuyết (PUT riêng để tần suất cao, không xung đột validation metadata)
+router.put(
+  "/:id/content",
+  validate(grammarLessonIdParamsSchema, "params"),
+  validate(updateGrammarLessonContentSchema),
+  updateGrammarLessonContent,
+);
+
+// Upload file DOCX để thay thế nội dung bài học đã tồn tại
+router.post(
+  "/:id/from-document",
+  validate(grammarLessonIdParamsSchema, "params"),
+  uploadGrammarDocument.single("file"),
+  validate(updateGrammarLessonFromDocumentSchema),
+  updateGrammarLessonFromDocument,
 );
 
 // Thay đổi thứ tự bài học

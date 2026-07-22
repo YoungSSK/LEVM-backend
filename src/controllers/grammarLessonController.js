@@ -65,6 +65,30 @@ export const deleteGrammarLesson = async (req, res) => {
   }
 };
 
+// Cập nhật nội dung lý thuyết (autosave editor)
+export const updateGrammarLessonContent = async (req, res) => {
+  try {
+    const result = await grammarLessonService.updateGrammarLessonContent(
+      req.params.id,
+      req.validatedData || req.body,
+      req.user?._id,
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Đã lưu nội dung",
+      data: result,
+    });
+  } catch (error) {
+    console.error("Lỗi updateGrammarLessonContent:", error);
+
+    return res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || "Lỗi hệ thống",
+    });
+  }
+};
+
 // Lấy chi tiết bài học ngữ pháp theo ID
 export const getGrammarLessonById = async (req, res) => {
   try {
@@ -387,6 +411,40 @@ export const createGrammarLessonFromDocument = async (req, res) => {
     });
   } catch (error) {
     console.error("Lỗi createGrammarLessonFromDocument:", error);
+
+    return res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || "Lỗi hệ thống",
+    });
+  }
+};
+
+// Upload file và cập nhật nội dung bài học đã tồn tại
+export const updateGrammarLessonFromDocument = async (req, res) => {
+  try {
+    const documentResult = await grammarDocumentService.uploadGrammarDocument(
+      req.file,
+    );
+
+    const validatedData = req.validatedData || {};
+    const updateData = {
+      ...validatedData,
+      htmlContent: documentResult.htmlContent,
+      plainTextContent: documentResult.plainTextContent,
+    };
+
+    const lesson = await grammarLessonService.updateGrammarLesson(
+      req.params.id,
+      updateData,
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Upload và cập nhật nội dung thành công",
+      data: lesson,
+    });
+  } catch (error) {
+    console.error("Lỗi updateGrammarLessonFromDocument:", error);
 
     return res.status(error.statusCode || 500).json({
       success: false,

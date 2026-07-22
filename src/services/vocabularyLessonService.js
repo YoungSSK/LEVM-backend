@@ -25,10 +25,10 @@ const generateUniqueSlug = async (title) => {
 };
 //Hàm tạo bài học mới
 export const createLesson = async (data) => {
-  const session = await mongoose.startSession();
+    const session = await mongoose.startSession();
   try {
     session.startTransaction();
-    const { topicId, title, description, thumbnail, estimatedTime } = data;
+    const { topicId, title, description, thumbnail, estimatedTime, xpReward } = data;
     const topicExist = await VocabularyTopic.findById(topicId).session(session);
     if (!topicExist) {
       throw new AppError("Topic không tồn tại", 404);
@@ -63,6 +63,7 @@ export const createLesson = async (data) => {
           isActive: true,
           order,
           wordCount: 0,
+          xpReward: xpReward !== undefined ? xpReward : 10,
         },
       ],
       { session },
@@ -100,7 +101,7 @@ export const updateLesson = async (lessonId, data) => {
   if (!lessonExist) {
     throw new AppError("Lesson không tồn tại", 404);
   }
-  const { title, description, thumbnail, estimatedTime } = data;
+  const { title, description, thumbnail, estimatedTime, xpReward } = data;
   const updatedData = {};
   if (title !== undefined) {
     const duplicateTitle = await VocabularyLesson.findOne({
@@ -123,6 +124,9 @@ export const updateLesson = async (lessonId, data) => {
   }
   if (estimatedTime !== undefined) {
     updatedData.estimatedTime = estimatedTime;
+  }
+  if (xpReward !== undefined) {
+    updatedData.xpReward = xpReward;
   }
   //Update data
   const updatedLesson = await VocabularyLesson.findByIdAndUpdate(
