@@ -110,3 +110,6 @@ export const submitQuizAttemptSchema = z
       .min(1, "Phải có ít nhất 1 câu trả lời"),
   })
   .strict();
+
+// Alias cho controller
+export const submitQuizSchema = submitQuizAttemptSchema;
