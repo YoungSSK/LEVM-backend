@@ -20,6 +20,10 @@ import xpRoutes from "./routes/xpRoutes.js";
 import streakRoutes from "./routes/streakRoutes.js";
 import attemptRoutes from "./routes/attemptRoutes.js";
 import spellingRoutes from "./routes/spellingRoutes.js";
+import readingCategoryRoute from "./routes/readingCategoryRoute.js";
+import readingPassageRoute from "./routes/readingPassageRoute.js";
+import readingQuestionRoute from "./routes/readingQuestionRoute.js";
+import readingAttemptRoute from "./routes/readingAttemptRoute.js";
 import { authMiddleware } from "./middlewares/authMiddleware.js";
 import swaggerUi from "swagger-ui-express";
 import fs from "fs";
@@ -85,6 +89,10 @@ app.use("/api/xp", xpRoutes);
 app.use("/api/streak", streakRoutes);
 app.use("/api/attempts", attemptRoutes);
 app.use("/api/spelling", spellingRoutes);
+app.use("/api/reading-categories", readingCategoryRoute);
+app.use("/api/reading-passages", readingPassageRoute);
+app.use("/api/reading-questions", readingQuestionRoute);
+app.use("/api/reading-attempts", readingAttemptRoute);
 connectDB().then(() => {
   // Share cookie options with controllers (so dev/prod parity is 1-file).
   app.locals.refreshCookieOptions = refreshCookieOptions;

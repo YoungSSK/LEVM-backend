@@ -2,6 +2,7 @@ import GrammarQuizQuestion from "../models/GrammarQuizQuestion.js";
 import GrammarLesson from "../models/GrammarLesson.js";
 import mongoose from "mongoose";
 import { parse } from "csv-parse/sync";
+import { processCsvBuffer } from "../utils/csv/index.js";
 import AppError from "../utils/AppError.js";
 import {
   grantRewardsIfFirstPass,
@@ -34,41 +35,7 @@ const CORRECT_OPTION_BY_KEY = {
   "4": 3,
 };
 
-/**
- * Decode buffer CSV về string UTF-8.
- * Hỗ trợ:
- *   - UTF-8 BOM / UTF-16 LE BOM / UTF-16 BE BOM
- *   - UTF-8 thuần (có thể có dấu tiếng Việt)
- *   - Fallback latin1 (Windows-1252) khi user save từ Excel Windows — vẫn
- *     giữ được phần lớn ký tự tiếng Việt thường gặp.
- */
-const decodeCsvBuffer = (buffer) => {
-  // UTF-8 BOM: EF BB BF
-  if (
-    buffer.length >= 3 &&
-    buffer[0] === 0xef &&
-    buffer[1] === 0xbb &&
-    buffer[2] === 0xbf
-  ) {
-    return new TextDecoder("utf-8").decode(buffer.subarray(3));
-  }
-  // UTF-16 LE BOM: FF FE
-  if (buffer.length >= 2 && buffer[0] === 0xff && buffer[1] === 0xfe) {
-    return new TextDecoder("utf-16le").decode(buffer.subarray(2));
-  }
-  // UTF-16 BE BOM: FE FF
-  if (buffer.length >= 2 && buffer[0] === 0xfe && buffer[1] === 0xff) {
-    return new TextDecoder("utf-16be").decode(buffer.subarray(2));
-  }
-  // Thử UTF-8 fatal trước (chính xác nhất)
-  try {
-    return new TextDecoder("utf-8", { fatal: true }).decode(buffer);
-  } catch {
-    // Fallback: latin1 — vẫn đọc được nội dung CSV, ký tự ngoài latin1 sẽ
-    // hiển thị lỗi nhẹ nhưng header + câu hỏi ASCII vẫn parse được.
-    return new TextDecoder("latin1").decode(buffer);
-  }
-};
+// Shared CSV Engine (processCsvBuffer) được sử dụng để tự động detect & decode Win-1258/UTF-8/UTF-16.
 
 const validateCsvStructure = (records, rawHeader) => {
   const headerLower = rawHeader.map((h) => String(h).trim().toLowerCase());
@@ -310,23 +277,11 @@ export const reorderQuizQuestions = async (lessonId, orders) => {
 export const importQuizFromCsv = async (lessonId, fileBuffer) => {
   await ensureLessonExists(lessonId);
 
-  // 1. Decode buffer về string UTF-8 (hỗ trợ BOM UTF-8/UTF-16, fallback latin1).
-  const rawText = decodeCsvBuffer(fileBuffer);
-
   let records, rawHeader;
   try {
-    rawHeader = rawText
-      .split(/\r?\n/)[0]
-      .split(",")
-      .map((h) => h.trim());
-    const parsed = parse(rawText, {
-      columns: (header) => header.map((h) => h.trim()),
-      skip_empty_lines: true,
-      trim: true,
-      relax_quotes: true,
-      relax_column_count: true,
-    });
-    records = parsed;
+    const csvResult = processCsvBuffer(fileBuffer);
+    records = csvResult.records;
+    rawHeader = csvResult.rawHeader;
   } catch (err) {
     throw new AppError(`CSV không hợp lệ: ${err.message}`, 400);
   }
