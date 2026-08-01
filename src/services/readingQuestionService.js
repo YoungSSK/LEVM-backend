@@ -256,6 +256,48 @@ export const getQuestionsBySet = async (questionSetId, { includeAnswers = false 
   }));
 };
 
+/**
+ * Lấy tất cả câu hỏi của một passage (gộp từ tất cả sets) — dùng cho Mobile App.
+ * Không trả về correctAnswer.
+ */
+export const getQuestionsByPassage = async (passageId) => {
+  // Lấy tất cả set active của passage
+  const sets = await ReadingQuestionSet.find({ passageId, isActive: true })
+    .sort({ order: 1 })
+    .select("_id")
+    .lean();
+
+  if (sets.length === 0) return [];
+
+  const setIds = sets.map((s) => s._id);
+
+  const docs = await ReadingQuestion.find({
+    questionSetId: { $in: setIds },
+    isActive: true,
+  })
+    .sort({ order: 1, createdAt: 1 })
+    .lean();
+
+  // Ẩn đáp án
+  return docs.map((q) => ({
+    _id: q._id,
+    questionSetId: q.questionSetId,
+    passageId: q.passageId,
+    questionText: q.questionText,
+    questionType: q.questionType,
+    contextText: q.contextText,
+    locationInPassage: q.locationInPassage,
+    points: q.points,
+    order: q.order,
+    wordLimit: q.wordLimit,
+    options: q.options?.map((o) => ({ key: o.key, text: o.text })),
+    leftItems: q.leftItems,
+    rightItems: q.rightItems,
+  }));
+};
+
+
+
 export const createQuestion = async (questionSetId, data) => {
   const set = await ensureSetExists(questionSetId);
 

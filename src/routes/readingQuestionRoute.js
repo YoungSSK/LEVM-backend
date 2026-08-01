@@ -1,5 +1,6 @@
 import express from "express";
 import {
+  getQuestionsByPassage,
   getQuestionSetsByPassage,
   getQuestionsBySet,
   getQuestionsForAdmin,
@@ -30,6 +31,9 @@ const router = express.Router();
 
 // Download CSV template (admin tool, nhưng không cần admin auth)
 router.get("/template", downloadCsvTemplate);
+
+// [MOBILE] Lấy tất cả câu hỏi của một passage (không có correctAnswer)
+router.get("/passage/:passageId", getQuestionsByPassage);
 
 // Lấy câu hỏi theo question set (Mobile — không có đáp án)
 router.get(

@@ -18,6 +18,27 @@ export const getQuestionSetsByPassage = async (req, res) => {
   }
 };
 
+/**
+ * Mobile API: Lấy tất cả câu hỏi của passage (không có correctAnswer).
+ * GET /reading-questions/passage/:passageId
+ */
+export const getQuestionsByPassage = async (req, res) => {
+  try {
+    const questions = await readingQuestionService.getQuestionsByPassage(
+      req.params.passageId,
+    );
+    return res.status(200).json({ success: true, data: { questions } });
+  } catch (error) {
+    console.error("Lỗi getQuestionsByPassage:", error);
+    return res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || "Lỗi hệ thống",
+    });
+  }
+};
+
+
+
 // ===== Questions =====
 
 export const getQuestionsBySet = async (req, res) => {
