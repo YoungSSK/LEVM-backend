@@ -21,6 +21,11 @@ import authorMiddleware from "../middlewares/authorMiddleware.js";
 import { validate } from "../middlewares/validateMiddleware.js";
 import uploadReadingDocument from "../middlewares/uploadReadingDocument.js";
 import {
+  loadReadingPassage,
+  loadReadingPassageBySlug,
+  lessonAccessMiddleware,
+} from "../middlewares/lessonAccessMiddleware.js";
+import {
   readingPassageIdParamsSchema,
   readingPassageSlugParamsSchema,
   categoryIdParamsSchema,
@@ -44,16 +49,22 @@ router.get("/published", getPublishedPassages);
 router.get("/", getAllReadingPassages);
 
 // Lấy bài đọc theo slug — đặt trước /:id
+// Áp access guard (log-only mặc định)
 router.get(
   "/slug/:slug",
   validate(readingPassageSlugParamsSchema, "params"),
+  loadReadingPassageBySlug,   // load doc by slug
+  lessonAccessMiddleware,     // kiểm tra gói thành viên
   getReadingPassageBySlug,
 );
 
 // Lấy bài đọc theo ID
+// Áp access guard (log-only mặc định)
 router.get(
   "/:id",
   validate(readingPassageIdParamsSchema, "params"),
+  loadReadingPassage,         // load doc by ID
+  lessonAccessMiddleware,     // kiểm tra gói thành viên
   getReadingPassageById,
 );
 

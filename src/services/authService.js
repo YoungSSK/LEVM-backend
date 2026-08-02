@@ -1,5 +1,6 @@
 import User from "../models/User.js";
 import Session from "../models/Session.js";
+import Package from "../models/Package.js";
 import AppError from "../utils/AppError.js";
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
@@ -23,12 +24,20 @@ export const register = async (data) => {
   }
   // mã hóa password
   const hashPassword = await bcrypt.hash(password, 10);
+
+  // Tìm gói Free mặc định (giá bằng 0) để gán cho tài khoản mới
+  const freePackage = await Package.findOne({
+    $or: [{ price: 0 }, { slug: "free" }],
+  });
+
   // tạo User mới
   await User.create({
     username,
     displayName: username,
     email,
     hashPassword,
+    currentPackageId: freePackage ? freePackage._id : null,
+    packageExpiresAt: null, // Gói Free không hết hạn
   });
 };
 // Service đăng nhập

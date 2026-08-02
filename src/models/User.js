@@ -80,6 +80,21 @@ const userSchema = new mongoose.Schema(
       enum: ["user", "admin"],
       default: "user",
     },
+
+    // ===== Membership (denormalized for fast access-control checks) =====
+    // Gói đang active của user. null = chưa có gói (sẽ được seed → Free).
+    // Đồng bộ lại mỗi khi subscription thay đổi hoặc cron expire chạy.
+    currentPackageId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Package",
+      default: null,
+    },
+
+    // Ngày hết hạn gói hiện tại. null = vĩnh viễn (gói Free hoặc mua lifetime).
+    packageExpiresAt: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,

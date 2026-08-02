@@ -13,6 +13,10 @@ import {
 
 import authorMiddleware from "../middlewares/authorMiddleware.js";
 import { validate } from "../middlewares/validateMiddleware.js";
+import {
+  loadVocabularyLesson,
+  lessonAccessMiddleware,
+} from "../middlewares/lessonAccessMiddleware.js";
 
 import {
   lessonIdParamsSchema,
@@ -25,10 +29,12 @@ import {
 const router = express.Router();
 
 //public route
-// Chi tiết bài học (hỗ trợ cả id và slug)
+// Chi tiết bài học — áp access guard (log-only mặc định)
 router.get(
   "/:id",
   validate(lessonIdParamsSchema, "params"),
+  loadVocabularyLesson,      // load doc vào req.lessonDoc
+  lessonAccessMiddleware,    // kiểm tra gói thành viên
   getVocabularyLessonById,
 );
 

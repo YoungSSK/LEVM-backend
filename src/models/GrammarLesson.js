@@ -112,6 +112,17 @@ const grammarLessonSchema = new mongoose.Schema(
       default: null,
     },
 
+    // ===== Membership Access Control =====
+    // Danh sách gói được phép truy cập bài học này (whitelist model).
+    // Rỗng = bài học Free, ai cũng xem được.
+    // Không rỗng = chỉ user có gói trong danh sách mới xem được nội dung chi tiết.
+    allowedPackageIds: {
+      type: [mongoose.Schema.Types.ObjectId],
+      ref: "Package",
+      default: [],
+      index: true,
+    },
+
     // ===== DEPRECATED =====
     // @deprecated Kể từ refactor Grammar: 1 lesson = Theory + Quiz. Sẽ xoá ở release sau.
     // Logic quiz mới dùng model GrammarQuizQuestion (lessonId ref tới đây).
