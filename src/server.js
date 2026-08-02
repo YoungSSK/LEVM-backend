@@ -27,6 +27,10 @@ import readingAttemptRoute from "./routes/readingAttemptRoute.js";
 import { authMiddleware } from "./middlewares/authMiddleware.js";
 import swaggerUi from "swagger-ui-express";
 import fs from "fs";
+import packageRoute from "./routes/packageRoute.js";
+import subscriptionRoute, { webhookRouter } from "./routes/subscriptionRoute.js";
+import { expireSubscriptions } from "./services/subscriptionService.js";
+import imageProxyRoute from "./routes/imageProxyRoute.js";
 
 dotenv.config();
 const app = express();
@@ -71,6 +75,14 @@ const swaggerDocument = JSON.parse(
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 //public router
 app.use("/api/auth", authRoute);
+
+// Webhook VNPay — public, PHẢI mount TRƯỚC authMiddleware
+// VNPay callback không có JWT token
+app.use("/api/webhooks/payment", webhookRouter);
+
+// Image proxy — public, bypass CORS for Flutter Web
+app.use("/api/image-proxy", imageProxyRoute);
+
 //pivate router
 app.use(authMiddleware);
 app.use("/api/users", userRoute);
@@ -93,6 +105,11 @@ app.use("/api/reading-categories", readingCategoryRoute);
 app.use("/api/reading-passages", readingPassageRoute);
 app.use("/api/reading-questions", readingQuestionRoute);
 app.use("/api/reading-attempts", readingAttemptRoute);
+
+// Membership routes
+app.use("/api/packages", packageRoute);
+app.use("/api/subscriptions", subscriptionRoute);
+
 connectDB().then(() => {
   // Share cookie options with controllers (so dev/prod parity is 1-file).
   app.locals.refreshCookieOptions = refreshCookieOptions;
@@ -100,6 +117,38 @@ connectDB().then(() => {
   app.listen(PORT, () => {
     console.log(`Server bắt đầu trên cổng ${PORT}`);
   });
+
+  // ── Cron: expire subscriptions hằng ngày lúc 00:05 ──────────────────────────
+  // Không dùng thư viện ngoài — dùng setInterval đơn giản (fire every 24h)
+  // Để dùng cron expression thật, cài thêm: npm install node-cron
+  const MS_PER_DAY = 24 * 60 * 60 * 1000;
+  const scheduleDailyExpiry = () => {
+    const now = new Date();
+    // Tính thời gian đến 00:05 ngày mai
+    const next = new Date(now);
+    next.setHours(0, 5, 0, 0);
+    if (next <= now) next.setDate(next.getDate() + 1);
+    const delay = next.getTime() - now.getTime();
+
+    setTimeout(async () => {
+      console.log("[Cron] Chạy expireSubscriptions...");
+      try {
+        await expireSubscriptions();
+      } catch (err) {
+        console.error("[Cron] expireSubscriptions lỗi:", err);
+      }
+      // Schedule lại cho ngày tiếp theo
+      setInterval(async () => {
+        console.log("[Cron] Chạy expireSubscriptions...");
+        try { await expireSubscriptions(); } catch (err) {
+          console.error("[Cron] expireSubscriptions lỗi:", err);
+        }
+      }, MS_PER_DAY);
+    }, delay);
+
+    console.log(`[Cron] expireSubscriptions lên lịch lúc ${next.toISOString()}`);
+  };
+  scheduleDailyExpiry();
 });
 
 // Shared cookie options — `secure: false` in dev so cookies survive plain

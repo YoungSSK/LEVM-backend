@@ -200,6 +200,17 @@ const readingPassageSchema = new mongoose.Schema(
       ref: "ReadingPassage",
       default: null,
     },
+
+    // ===== Membership Access Control =====
+    // Danh sách gói được phép truy cập bài đọc này (whitelist model).
+    // Rỗng = bài Free, ai cũng xem được.
+    // Không rỗng = chỉ user có gói trong danh sách mới xem được nội dung chi tiết.
+    allowedPackageIds: {
+      type: [mongoose.Schema.Types.ObjectId],
+      ref: "Package",
+      default: [],
+      index: true,
+    },
   },
   {
     timestamps: true,

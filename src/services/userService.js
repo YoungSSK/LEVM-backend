@@ -32,7 +32,9 @@ const populateOccupationCategoryName = async (userDoc) => {
 
 // lấy thông tin người dùng
 export const fetchMe = async (userId) => {
-  const user = await User.findById(userId).select("-hashPassword");
+  const user = await User.findById(userId)
+    .select("-hashPassword")
+    .populate("currentPackageId", "name slug level price");
   if (!user) {
     throw new AppError("User không tồn tại", 404);
   }

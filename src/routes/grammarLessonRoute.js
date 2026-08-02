@@ -23,6 +23,11 @@ import {
 import authorMiddleware from "../middlewares/authorMiddleware.js";
 import { validate } from "../middlewares/validateMiddleware.js";
 import uploadGrammarDocument from "../middlewares/uploadGrammarDocument.js";
+import {
+  loadGrammarLesson,
+  loadGrammarLessonBySlug,
+  lessonAccessMiddleware,
+} from "../middlewares/lessonAccessMiddleware.js";
 
 import {
   grammarLessonIdParamsSchema,
@@ -67,12 +72,19 @@ router.get("/", getAllGrammarLessons);
 
 // Lấy chi tiết bài học ngữ pháp theo Slug
 // Đặt TRƯỚC /:id để tránh slug bị nhận dạng sai thành lesson ID
-router.get("/slug/:slug", getGrammarLessonBySlug);
+// lessonAccessMiddleware: kiểm tra gói thành viên (log-only mặc định)
+router.get("/slug/:slug",
+  loadGrammarLessonBySlug,  // load doc by slug vào req.lessonDoc
+  lessonAccessMiddleware,
+  getGrammarLessonBySlug,
+);
 
 // Lấy chi tiết bài học ngữ pháp theo ID
 router.get(
   "/:id",
   validate(grammarLessonIdParamsSchema, "params"),
+  loadGrammarLesson,       // load doc vào req.lessonDoc
+  lessonAccessMiddleware,  // kiểm tra gói thành viên
   getGrammarLessonById,
 );
 
