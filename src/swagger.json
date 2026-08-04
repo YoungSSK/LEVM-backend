@@ -19,6 +19,10 @@
     {
       "name": "User",
       "description": "Authenticated user profile and password APIs"
+    },
+    {
+      "name": "Listening",
+      "description": "TOEIC Listening Part 1-4 APIs"
     }
   ],
   "paths": {
@@ -392,6 +396,44 @@
               }
             }
           }
+        }
+      }
+    },
+    "/listening/sets": {
+      "get": {
+        "tags": ["Listening"],
+        "summary": "Get list of listening sets",
+        "parameters": [
+          { "name": "part", "in": "query", "schema": { "type": "integer" } },
+          { "name": "status", "in": "query", "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Success" }
+        }
+      },
+      "post": {
+        "tags": ["Listening"],
+        "summary": "Create listening set (Admin)",
+        "responses": {
+          "201": { "description": "Created" }
+        }
+      }
+    },
+    "/listening/sets/{id}/play": {
+      "get": {
+        "tags": ["Listening"],
+        "summary": "Get play payload for learner (isCorrect stripped)",
+        "responses": {
+          "200": { "description": "Success" }
+        }
+      }
+    },
+    "/listening/attempts/submit": {
+      "post": {
+        "tags": ["Listening"],
+        "summary": "Submit learner attempt",
+        "responses": {
+          "200": { "description": "Success" }
         }
       }
     }

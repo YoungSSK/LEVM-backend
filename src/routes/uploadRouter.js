@@ -4,16 +4,8 @@ import * as uploadController from "../controllers/uploadController.js";
 
 const router = express.Router();
 
-// Configure multer for file uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, "uploads/");
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(null, uniqueSuffix + "-" + file.originalname);
-  },
-});
+// Configure multer to use RAM memoryStorage (Streams directly to Cloudinary without creating temp disk files)
+const storage = multer.memoryStorage();
 
 const upload = multer({
   storage,

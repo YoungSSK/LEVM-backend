@@ -145,6 +145,7 @@ export const createReadingPassage = async (data, createdByUserId) => {
     xpReward: xpReward !== undefined ? xpReward : 15,
     passThreshold: passThreshold !== undefined ? passThreshold : 70,
     status: "draft",
+    allowedPackageIds: allowedPackageIds || [],
   });
 
   // Cập nhật passageCount trong category
@@ -189,6 +190,7 @@ export const updateReadingPassage = async (passageId, data, updatedByUserId) => 
   const simpleFields = [
     "description", "thumbnail", "difficulty", "cefrLevel",
     "readingType", "tags", "estimatedTime", "order", "xpReward", "passThreshold",
+    "allowedPackageIds",
   ];
   for (const field of simpleFields) {
     if (data[field] !== undefined) updatedData[field] = data[field];
@@ -207,7 +209,8 @@ export const updateReadingPassage = async (passageId, data, updatedByUserId) => 
     if (updatedByUserId) updatedData.contentUpdatedBy = updatedByUserId;
   }
 
-  const updated = await ReadingPassage.findByIdAndUpdate(passageId, updatedData, { new: true });
+  const updated = await ReadingPassage.findByIdAndUpdate(passageId, updatedData, { new: true })
+    .populate("allowedPackageIds", "name slug level");
 
   // Nếu đổi category thì cập nhật passageCount cho cả hai
   if (data.categoryId && data.categoryId.toString() !== oldCategoryId.toString()) {
@@ -250,6 +253,7 @@ export const getReadingPassageById = async (passageId) => {
     .populate("categoryId", "name slug")
     .populate("createdBy", "username displayName")
     .populate("updatedBy", "username displayName")
+    .populate("allowedPackageIds", "name slug level")
     .lean();
 
   if (!passage) {
@@ -263,6 +267,7 @@ export const getReadingPassageBySlug = async (slug) => {
   const passage = await ReadingPassage.findOne({ slug })
     .populate("categoryId", "name slug")
     .populate("createdBy", "username displayName")
+    .populate("allowedPackageIds", "name slug level")
     .lean();
 
   if (!passage) {
@@ -309,6 +314,7 @@ export const getAllReadingPassages = async (options = {}) => {
   const [passages, total] = await Promise.all([
     ReadingPassage.find(filter)
       .populate("categoryId", "name slug")
+      .populate("allowedPackageIds", "name slug level")
       .sort(sort)
       .skip(skip)
       .limit(limit)

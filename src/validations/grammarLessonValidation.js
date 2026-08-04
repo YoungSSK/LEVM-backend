@@ -151,6 +151,13 @@ export const createGrammarLessonSchema = z
         .optional()
         .default("<p></p>"),
     ),
+
+    allowedPackageIds: z
+      .array(
+        z.string().regex(objectIdRegex, "ID gói không hợp lệ"),
+      )
+      .optional()
+      .default([]),
   })
   .strict();
 
@@ -187,7 +194,7 @@ export const updateGrammarLessonSchema = z
 
     thumbnailUrl: z.preprocess(
       trimString,
-      z.string().url("Thumbnail URL không hợp lệ").or(z.literal("")).optional(),
+      z.string().url("URL ảnh đại diện không hợp lệ").or(z.literal("")).optional(),
     ),
 
     estimatedTime: z
@@ -252,6 +259,12 @@ export const updateGrammarLessonSchema = z
         .nullable()
         .transform((v) => (v === "" || v === null ? null : v)),
     ),
+
+    allowedPackageIds: z
+      .array(
+        z.string().regex(objectIdRegex, "ID gói không hợp lệ"),
+      )
+      .optional(),
   })
   .strict()
   .refine((data) => Object.keys(data).length > 0, {

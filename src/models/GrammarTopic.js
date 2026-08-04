@@ -27,6 +27,12 @@ const grammarTopicSchema = new mongoose.Schema(
       maxlength: 1000,
     },
 
+    // Thumbnail / Banner image URL
+    thumbnail: {
+      type: String,
+      default: "",
+    },
+
     // Thứ tự hiển thị
     order: {
       type: Number,

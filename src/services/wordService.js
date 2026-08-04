@@ -290,7 +290,7 @@ export const getAll = async (page = 1, limit = 10) => {
       .sort({ word: 1 })
       .skip(skip)
       .limit(currentLimit)
-      .select("slug word pronunciations audioUrls imageUrl difficulty ")
+      .select("slug word pronunciations audioUrls imageUrl difficulty isActive")
 
       .populate({
         path: "meanings",
@@ -315,7 +315,6 @@ export const getAll = async (page = 1, limit = 10) => {
     isActive: word.isActive,
     meanings: word.meanings,
   }));
-  console.log("DEBUG mappedWords[0]:", mappedWords[0]); // 👈 thêm dòng này
   // return
   return {
     words: mappedWords,
