@@ -55,6 +55,11 @@ export const createGrammarTopicSchema = z
         .default(""),
     ),
 
+    thumbnail: z.preprocess(
+      trimString,
+      z.string().max(2000, "URL thumbnail không được quá 2000 ký tự").optional().default(""),
+    ),
+
     order: z
       .number({
         invalid_type_error: "Thứ tự hiển thị phải là số",
@@ -90,6 +95,11 @@ export const updateGrammarTopicSchema = z
         .string()
         .max(1000, "Mô tả không được vượt quá 1000 ký tự")
         .optional(),
+    ),
+
+    thumbnail: z.preprocess(
+      trimString,
+      z.string().max(2000, "URL thumbnail không được quá 2000 ký tự").optional(),
     ),
 
     order: z

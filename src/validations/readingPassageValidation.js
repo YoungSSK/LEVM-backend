@@ -190,6 +190,13 @@ export const createReadingPassageSchema = z
       .max(100, "Ngưỡng đạt không được vượt quá 100")
       .optional()
       .default(70),
+
+    allowedPackageIds: z
+      .array(
+        z.string().regex(objectIdRegex, "ID gói không hợp lệ"),
+      )
+      .optional()
+      .default([]),
   })
   .strict();
 
@@ -277,6 +284,12 @@ export const updateReadingPassageSchema = z
       .int("Ngưỡng đạt phải là số nguyên")
       .min(0)
       .max(100)
+      .optional(),
+
+    allowedPackageIds: z
+      .array(
+        z.string().regex(objectIdRegex, "ID gói không hợp lệ"),
+      )
       .optional(),
   })
   .strict()

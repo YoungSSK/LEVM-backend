@@ -24,6 +24,7 @@ import readingCategoryRoute from "./routes/readingCategoryRoute.js";
 import readingPassageRoute from "./routes/readingPassageRoute.js";
 import readingQuestionRoute from "./routes/readingQuestionRoute.js";
 import readingAttemptRoute from "./routes/readingAttemptRoute.js";
+import listeningRoute from "./routes/listeningRoute.js";
 import { authMiddleware } from "./middlewares/authMiddleware.js";
 import swaggerUi from "swagger-ui-express";
 import fs from "fs";
@@ -105,10 +106,20 @@ app.use("/api/reading-categories", readingCategoryRoute);
 app.use("/api/reading-passages", readingPassageRoute);
 app.use("/api/reading-questions", readingQuestionRoute);
 app.use("/api/reading-attempts", readingAttemptRoute);
+app.use("/api/listening", listeningRoute);
 
 // Membership routes
 app.use("/api/packages", packageRoute);
-app.use("/api/subscriptions", subscriptionRoute);
+// Global Error Handler
+app.use((err, req, res, next) => {
+  console.error("Unhandled Route Error:", err);
+  const statusCode = err.statusCode || err.status || 500;
+  const message = err.message || "Lỗi hệ thống";
+  return res.status(statusCode).json({
+    success: false,
+    message,
+  });
+});
 
 connectDB().then(() => {
   // Share cookie options with controllers (so dev/prod parity is 1-file).

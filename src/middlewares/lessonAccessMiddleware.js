@@ -15,9 +15,11 @@
  *   router.get("/:id", loadLessonMiddleware, lessonAccessMiddleware, getById)
  */
 
+import mongoose from "mongoose";
 import GrammarLesson from "../models/GrammarLesson.js";
 import VocabularyLesson from "../models/VocabularyLesson.js";
 import ReadingPassage from "../models/ReadingPassage.js";
+import ListeningSet from "../models/ListeningSet.js";
 
 // Feature flag: set LESSON_ACCESS_ENFORCE=true trong .env khi sẵn sàng chặn thật
 const ENFORCE = process.env.LESSON_ACCESS_ENFORCE === "true";
@@ -34,28 +36,33 @@ if (!ENFORCE) {
 
 async function hasValidAccess(user, allowedPackageIds) {
   if (!allowedPackageIds || allowedPackageIds.length === 0) return true; // Free
-  if (!user || !user.currentPackageId) return false;
 
-  // Kiểm tra hạn
-  if (user.packageExpiresAt && new Date(user.packageExpiresAt) < new Date()) {
-    return false; // hết hạn
-  }
-
-  // 1. Kiểm tra trực tiếp ID match
-  const userPkgId = user.currentPackageId.toString();
-  const inWhitelist = allowedPackageIds.some(
-    (id) => id.toString() === userPkgId,
-  );
-  if (inWhitelist) return true;
-
-  // 2. Progressive Level Check (Gán gói level X -> user có gói level >= X đều được học)
   try {
     const Package = (await import("../models/Package.js")).default;
-    const [userPkg, allowedPkgs] = await Promise.all([
-      Package.findById(user.currentPackageId).select("level").lean(),
-      Package.find({ _id: { $in: allowedPackageIds } }).select("level").lean(),
-    ]);
+    const allowedPkgs = await Package.find({ _id: { $in: allowedPackageIds } }).select("level price slug name").lean();
 
+    // Nếu trong whitelist có gói level 0 / price 0 -> Bài học hoàn toàn miễn phí cho tất cả mọi người
+    const hasFreePackage = allowedPkgs.some(
+      (p) => (p.level ?? 0) === 0 || (p.price ?? 0) === 0 || p.slug === "free" || p.slug === "thuong",
+    );
+    if (hasFreePackage) return true;
+
+    if (!user || !user.currentPackageId) return false;
+
+    // Kiểm tra hạn gói
+    if (user.packageExpiresAt && new Date(user.packageExpiresAt) < new Date()) {
+      return false; // hết hạn
+    }
+
+    // 1. Kiểm tra trực tiếp ID match
+    const userPkgId = user.currentPackageId.toString();
+    const inWhitelist = allowedPackageIds.some(
+      (id) => id.toString() === userPkgId,
+    );
+    if (inWhitelist) return true;
+
+    // 2. Progressive Level Check (Gán gói level X -> user có gói level >= X đều được học)
+    const userPkg = await Package.findById(user.currentPackageId).select("level").lean();
     if (!userPkg || !allowedPkgs.length) return false;
 
     const minRequiredLevel = Math.min(...allowedPkgs.map((p) => p.level ?? 0));
@@ -83,7 +90,12 @@ export function makeLoadDocMiddleware(Model, paramName = "id") {
       const paramValue = req.params[paramName];
       let doc;
 
-      if (paramName === "slug") {
+      const isObjectId =
+        typeof paramValue === "string" &&
+        mongoose.Types.ObjectId.isValid(paramValue) &&
+        /^[0-9a-fA-F]{24}$/.test(paramValue);
+
+      if (paramName === "slug" || !isObjectId) {
         doc = await Model.findOne({ slug: paramValue })
           .select("allowedPackageIds title slug")
           .lean();
@@ -100,6 +112,7 @@ export function makeLoadDocMiddleware(Model, paramName = "id") {
       req.lessonDoc = doc;
       next();
     } catch (error) {
+      console.error("[LessonAccess] Lỗi makeLoadDocMiddleware:", error);
       return res.status(500).json({ success: false, message: "Lỗi hệ thống" });
     }
   };
@@ -158,3 +171,5 @@ export const loadVocabularyLessonBySlug = makeLoadDocMiddleware(VocabularyLesson
 
 export const loadReadingPassage = makeLoadDocMiddleware(ReadingPassage);
 export const loadReadingPassageBySlug = makeLoadDocMiddleware(ReadingPassage, "slug");
+
+export const loadListeningSet = makeLoadDocMiddleware(ListeningSet);

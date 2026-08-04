@@ -7,7 +7,7 @@ import slugify from "slugify";
 const objectIdRegex = /^[0-9a-fA-F]{24}$/;
 // TẠO CHỦ ĐỀ NGỮ PHÁP MỚI
 export const createGrammarTopic = async (data) => {
-  const { name, description, order, lessonCount, isActive } = data;
+  const { name, description, thumbnail, order, lessonCount, isActive } = data;
   //Kiểm tra trùng tên
   const duplicateName = await GrammarTopic.findOne({ name });
   if (duplicateName) {
@@ -19,6 +19,7 @@ export const createGrammarTopic = async (data) => {
     name,
     slug,
     description,
+    thumbnail,
     order,
     isActive,
   });
@@ -57,6 +58,9 @@ export const updateGrammarTopic = async (topicId, data) => {
   }
   if (data.description !== undefined) {
     updatedData.description = data.description;
+  }
+  if (data.thumbnail !== undefined) {
+    updatedData.thumbnail = data.thumbnail;
   }
   if (data.order !== undefined) {
     updatedData.order = data.order;

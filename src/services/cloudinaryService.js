@@ -3,7 +3,7 @@ import AppError from "../utils/AppError.js";
 
 // Allowed file formats
 const ALLOWED_IMAGE_FORMATS = ["jpg", "jpeg", "png", "webp", "gif", "svg"];
-const ALLOWED_AUDIO_FORMATS = ["mp3"];
+const ALLOWED_AUDIO_FORMATS = ["mp3", "m4a", "wav"];
 
 // Maximum file sizes (in bytes)
 const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB

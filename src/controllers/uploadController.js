@@ -1,12 +1,12 @@
 import * as cloudinaryService from "../services/cloudinaryService.js";
 
 /**
- * Handle image upload
+ * Handle image upload directly from RAM buffer to Cloudinary
  * POST /api/upload/image
  */
 export const uploadImage = async (req, res) => {
   try {
-    if (!req.file) {
+    if (!req.file || !req.file.buffer) {
       return res.status(400).json({
         success: false,
         message: "Vui lòng gửi file ảnh",
@@ -14,7 +14,7 @@ export const uploadImage = async (req, res) => {
     }
 
     const folder = req.body.folder || "general";
-    const result = await cloudinaryService.uploadImage(req.file.path, { folder });
+    const result = await cloudinaryService.uploadBuffer(req.file.buffer, "image", { folder });
 
     return res.status(201).json({
       success: true,
@@ -31,12 +31,12 @@ export const uploadImage = async (req, res) => {
 };
 
 /**
- * Handle audio upload
+ * Handle audio upload directly from RAM buffer to Cloudinary
  * POST /api/upload/audio
  */
 export const uploadAudio = async (req, res) => {
   try {
-    if (!req.file) {
+    if (!req.file || !req.file.buffer) {
       return res.status(400).json({
         success: false,
         message: "Vui lòng gửi file audio",
@@ -44,7 +44,7 @@ export const uploadAudio = async (req, res) => {
     }
 
     const folder = req.body.folder || "audio";
-    const result = await cloudinaryService.uploadAudio(req.file.path, { folder });
+    const result = await cloudinaryService.uploadBuffer(req.file.buffer, "video", { folder });
 
     return res.status(201).json({
       success: true,

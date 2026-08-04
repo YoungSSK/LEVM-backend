@@ -103,6 +103,13 @@ export const createLessonSchema = z
       )
       .optional()
       .default(10),
+
+    allowedPackageIds: z
+      .array(
+        z.string().refine((val) => objectIdRegex.test(val), "ID gói không hợp lệ"),
+      )
+      .optional()
+      .default([]),
   })
   .strict();
 
@@ -145,6 +152,12 @@ export const updateLessonSchema = z
           .min(0, "XP thưởng không được âm")
           .max(1000, "XP thưởng tối đa 1000")
           .optional(),
+      )
+      .optional(),
+
+    allowedPackageIds: z
+      .array(
+        z.string().refine((val) => objectIdRegex.test(val), "ID gói không hợp lệ"),
       )
       .optional(),
   })

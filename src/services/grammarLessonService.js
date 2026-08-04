@@ -159,6 +159,7 @@ export const createGrammarLesson = async (data) => {
     isActive: isActive !== undefined ? isActive : true,
     lessonType: lessonType || "theory",
     parentLessonId: parentLessonId || null,
+    allowedPackageIds: data.allowedPackageIds || [],
   });
   // Cập nhật số lượng bài học của chủ đề
   await updateLessonCount(topicId);
@@ -229,6 +230,10 @@ export const updateGrammarLesson = async (lessonId, data) => {
     updatedData.isActive = data.isActive;
   }
 
+  if (data.allowedPackageIds !== undefined) {
+    updatedData.allowedPackageIds = data.allowedPackageIds;
+  }
+
   if (data.lessonType !== undefined) {
     updatedData.lessonType = data.lessonType;
     if (data.lessonType !== "exercise") {
@@ -246,7 +251,7 @@ export const updateGrammarLesson = async (lessonId, data) => {
     {
       new: true,
     },
-  );
+  ).populate("allowedPackageIds", "name slug level");
 
   // Nếu đổi topic thì cập nhật lại lessonCount
   if (
@@ -282,6 +287,7 @@ export const deleteGrammarLesson = async (lessonId) => {
 export const getGrammarLessonById = async (lessonId) => {
   const lesson = await GrammarLesson.findById(lessonId)
     .populate("topicId", "name slug")
+    .populate("allowedPackageIds", "name slug level")
     .lean();
 
   if (!lesson) {
@@ -323,6 +329,7 @@ export const getGrammarLessonBySlug = async (slug) => {
     isPublished: true,
   })
     .populate("topicId", "name slug")
+    .populate("allowedPackageIds", "name slug level")
     .lean();
 
   if (!lesson) {
@@ -404,6 +411,7 @@ export const getAllGrammarLessons = async (options = {}) => {
   const [lessons, total] = await Promise.all([
     GrammarLesson.find(filter)
       .populate("topicId", "name slug")
+      .populate("allowedPackageIds", "name slug level")
       .sort(sort)
       .skip(skip)
       .limit(limit)
